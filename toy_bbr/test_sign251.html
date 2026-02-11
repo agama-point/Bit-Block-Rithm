@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>ESS251 ECC Demo – Ukecané</title>
+<script src="js/jquery.min.js"></script>
+<script src="js/ash24.js"></script>
+<script src="js/ess251.js"></script>
+<style>
+  body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+  input, button { margin: 5px; padding: 5px; }
+  .output { margin-top: 10px; white-space: pre-line; }
+  hr { margin: 20px 0; border: 1px solid #0f0; }
+</style>
+</head>
+<body>
+
+<h2>ESS251 ECC Demo – Ukecané</h2>
+<input type="text" id="msgInput" placeholder="Zadejte zprávu"/>
+<button id="runBtn">Spustit demo</button>
+<div class="output" id="demoOutput"></div>
+
+<script>
+$(document).ready(function() {
+
+  function hex24(n) { return "0x" + n.toString(16).padStart(6,'0'); }
+
+  function log(msg) {
+    $("#demoOutput").append(msg + "\n");
+  }
+
+  $("#runBtn").click(function() {
+    $("#demoOutput").text("");
+    let msg = $("#msgInput").val();
+    if (!msg) { log("❌ Zadejte zprávu!"); return; }
+
+    log("=== START ESS251 ECC UKECANÉ DEMO ===");
+    log(`Zpráva: "${msg}"`);
+
+    // --- Hash zprávy ---
+    let h = ASH24(msg);
+    log(`ASH24 hash zprávy: ${hex24(h)} (použito pro nonce a podpis)`);
+
+    // --- Alice klíče ---
+    let alice_priv = 111;
+    let alice_pub = scalar_mult(alice_priv, G_POINT);
+    log(`Alice privátní klíč: ${alice_priv}`);
+    log(`Alice veřejný klíč (G*priv): [${alice_pub}]`);
+
+    // --- Sign Alice ---
+    log("\n--- PODEPSÁNÍ ZPRÁVY ALICE ---");
+    let sigAlice = sign(alice_priv, h, true);
+
+    log(`Nonce k (deterministicky z hash): ${(h ^ 0x55) % ORDER_N}`);
+    log(`R bod (k*G): [${sigAlice.R_point}]`);
+    log(`Signature components: r=${sigAlice.r}, s=${sigAlice.s}`);
+
+    // --- Verify Alice ---
+    log("\n--- OVĚŘENÍ ALICE ---");
+    let L = scalar_mult(sigAlice.s, G_POINT);
+    let e_Pub = scalar_mult(h % ORDER_N, alice_pub);
+    let P = point_adding(sigAlice.R_point, e_Pub);
+    log(`Výpočet L = s*G: [${L}]`);
+    log(`Výpočet P = R + e*PubKey: [${P}]`);
+    let validAlice = verify(alice_pub, h, sigAlice);
+    log(`Výsledek ověření: ${validAlice ? "Valid ✅" : "Invalid ❌"}`);
+
+    log("\n--- BOB TEST ---");
+    let bob_priv = 222;
+    let bob_pub = scalar_mult(bob_priv, G_POINT);
+    log(`Bob privátní klíč: ${bob_priv}`);
+    log(`Bob veřejný klíč: [${bob_pub}]`);
+
+    let h_bob = ASH24(msg);
+    log(`Bob ASH24 hash: ${hex24(h_bob)}`);
+
+    let sigBob = sign(bob_priv, h_bob, true);
+    log(`Nonce k: ${(h_bob ^ 0x55) % ORDER_N}`);
+    log(`R bod: [${sigBob.R_point}]`);
+    log(`Signature components: r=${sigBob.r}, s=${sigBob.s}`);
+
+    let validBob = verify(bob_pub, h_bob, sigBob);
+    log(`Výsledek ověření Boba: ${validBob ? "Valid ✅" : "Invalid ❌"}`);
+
+    log("\n=== KONEC UKECANÉHO DEMO ===");
+  });
+});
+</script>
+
+</body>
+</html>

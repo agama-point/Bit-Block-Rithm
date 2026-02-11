@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>ECC – diskrétní sčítání bodů</title>
+  <link rel="stylesheet" type="text/css" href="css/dark.css">
+  <script src="js/p5.min.js"></script>
+  <script src="js/ecc.js"></script>
+
+  <style>
+    body { font-family: sans-serif; }
+  </style>
+</head>
+<body>
+
+<script>
+/* ====== ECC PARAMETRY ====== */
+const p = 251; // Fixní prvočíslo
+const a = 0;
+const b = 7;
+
+// Výchozí bod G (generátor) xxx(15,13)
+const Gx = 1;
+const Gy = 192;
+
+let kSlider;
+
+function setup() {
+  createCanvas(600, 650);
+  // Slider nyní ovládá k (soukromý klíč) od 1 do p
+  kSlider = createSlider(1, p, 1);
+  kSlider.position(20, 610);
+  kSlider.style('width', '510px');
+}
+
+function draw() {
+  background(20); // Tmavé pozadí
+
+  const margin = 50;
+  const size = 500;
+  const cell = size / (p - 1);
+
+  // Vykreslení mřížky (optimalizováno - jen okraje a hlavní osy)
+  stroke(40, 60, 40);
+  strokeWeight(1);
+  line(margin, margin, margin + size, margin);
+  line(margin, margin + size, margin + size, margin + size);
+  line(margin, margin, margin, margin + size);
+  line(margin + size, margin, margin + size, margin + size);
+
+  // Aktuální stav výpočtu
+  let currentX = Gx;
+  let currentY = Gy;
+  let targetK = kSlider.value();
+
+  /* VÝPOČETNÍ CYKLUS */
+  // Vykreslíme cestu sčítání až do bodu k
+  let prevScreenX = null;
+  let prevScreenY = null;
+
+  for (let i = 1; i <= targetK; i++) {
+    const screenX = margin + currentX * cell;
+    const screenY = margin + (p - 1 - currentY) * cell;
+
+    // Vykreslení spojnice (historie sčítání)
+    if (prevScreenX !== null) {
+      stroke(0, 250, 0, 50);
+      line(prevScreenX, prevScreenY, screenX, screenY);
+    }
+
+    // Vykreslení bodu
+    noStroke();
+    if (i === 1) fill(0, 255, 0); // G je zelený
+    else if (i === targetK) fill(255, 0, 0); // Cílový bod je červený
+    else fill(0, 200, 0, 150); // Ostatní body na cestě jsou poloprůhledné
+
+    circle(screenX, screenY, i === targetK ? 8 : 4);
+
+    prevScreenX = screenX;
+    prevScreenY = screenY;
+
+    // Logika sčítání pro další iteraci
+    if (i < targetK) {
+      try {
+        // Předpokládám existenci těchto funkcí ve tvém ecc.js
+        if (i === 1) {
+          [currentX, currentY] = point_doubling(currentX, currentY, a, p);
+        } else {
+          [currentX, currentY] = point_adding(currentX, currentY, Gx, Gy, p);
+        }
+      } catch (e) {
+        // Bod v nekonečnu nebo chyba
+        break;
+      }
+    }
+  }
+
+  /* INFO PANEL */
+  fill(0, 255, 0);
+  textSize(16);
+  textAlign(LEFT, TOP);
+  //text(`y² = x³ + 7 (mod 251) | ${p}`, 20, 10);
+  text(`y² = x³ + 7 (mod 251) | Secret (k): `, 50, 10);
+  text(` | Public key K = k * G:`, 318, 10);
+  fill(255, 255, 0);
+  text(`${targetK}`, 290, 10);
+  text(`[${currentX}, ${currentY}]`, 480, 10);
+
+  
+  // Popisky os
+  fill(100);
+  textSize(10);
+  text("0", margin - 15, margin + size);
+  text(p-1, margin + size, margin + size + 10);
+}</script>
+
+</body>
+</html>
