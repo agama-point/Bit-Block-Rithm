@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>ECC Table Generator - ESS251</title>
+  <script src="js/jquery.min.js"></script>
+  <style>
+    body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff00; padding: 20px; }
+    h2 { color: #fff; border-bottom: 1px solid #00ff00; padding-bottom: 10px; }
+    
+    table { border-collapse: collapse; width: 100%; max-width: 800px; margin-top: 20px; }
+    th { text-align: left; border-bottom: 2px solid #00ff00; padding: 8px; color: #fff; }
+    td { padding: 4px 8px; border-bottom: 1px solid #222; }
+    
+    .k-val { color: #ffff00; font-weight: bold; }
+    .coords { color: #00ffff; }
+    .hex-key { color: #ff00ff; letter-spacing: 1px; }
+    
+    tr:hover { background: #1a1a1a; }
+    .infinite { color: #ff4444; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<h2>ECC ESS251: Kompletní seznam veřejných klíčů</h2>
+<p>Parametry: p=251, G=(1, 192). Výpočet probíhá pro k * G.</p>
+
+<table id="eccTable">
+  <thead>
+    <tr>
+      <th>k (Privátní)</th>
+      <th>Souřadnice [X, Y]</th>
+      <th>Veřejný klíč (Hex)</th>
+    </tr>
+  </thead>
+  <tbody>
+    </tbody>
+</table>
+
+<script>
+// --- KNIHOVNA ESS251 ---
+const P_MOD = 251;
+const A_PARAM = 0;
+const G_POINT = [1, 192];
+const ORDER_N = 252;
+
+function modN(n, m) { return ((n % m) + m) % m; }
+
+function inv_mod(x, mod_val) {
+    x = modN(x, mod_val);
+    for (let i = 1; i < mod_val; i++) {
+        if ((x * i) % mod_val === 1) return i;
+    }
+    return null;
+}
+
+function point_doubling(P, a = A_PARAM, p = P_MOD) {
+    if (P === null) return null;
+    let [x, y] = P;
+    if (y === 0) return null;
+    let num = modN(3 * x * x + a, p);
+    let den = inv_mod(2 * y, p);
+    if (den === null) return null;
+    let slope = modN(num * den, p);
+    let x3 = modN(slope * slope - 2 * x, p);
+    let y3 = modN(slope * (x - x3) - y, p);
+    return [x3, y3];
+}
+
+function point_adding(P1, P2, p = P_MOD, a = A_PARAM) {
+    if (P1 === null) return P2;
+    if (P2 === null) return P1;
+    let [x1, y1] = P1;
+    let [x2, y2] = P2;
+    if (x1 === x2 && y1 !== y2) return null;
+    if (x1 === x2) return point_doubling(P1, a, p);
+    let num = modN(y2 - y1, p);
+    let den = inv_mod(modN(x2 - x1, p), p);
+    if (den === null) return null;
+    let slope = modN(num * den, p);
+    let x3 = modN(slope * slope - x1 - x2, p);
+    let y3 = modN(slope * (x1 - x3) - y1, p);
+    return [x3, y3];
+}
+
+function scalar_mult(k, P) {
+    let result = null;
+    let addend = P;
+    while (k > 0) {
+        if (k & 1) result = point_adding(result, addend);
+        addend = point_doubling(addend);
+        k >>= 1;
+    }
+    return result;
+}
+
+function pubkey_to_addr(pub) {
+    if (!pub) return "INF";
+    return pub[0].toString(16).padStart(2, '0') +
+           pub[1].toString(16).padStart(2, '0');
+}
+
+// --- GENERICKÝ CYKLUS ---
+$(document).ready(function() {
+    const $tbody = $("#eccTable tbody");
+    
+    for (let k = 1; k <= 251; k++) {
+        let pubPoint = scalar_mult(k, G_POINT);
+        let row;
+
+        if (pubPoint === null) {
+            row = `<tr>
+                    <td class="k-val">${k}</td>
+                    <td colspan="2" class="infinite">Bod v nekonečnu (O)</td>
+                   </tr>`;
+        } else {
+            let hexKey = pubkey_to_addr(pubPoint).toUpperCase();
+            row = `<tr>
+                    <td class="k-val">${k}</td>
+                    <td class="coords">[${pubPoint[0].toString().padStart(3, ' ')}, ${pubPoint[1].toString().padStart(3, ' ')}]</td>
+                    <td class="hex-key">0x${hexKey}</td>
+                   </tr>`;
+        }
+        $tbody.append(row);
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Test ECC, ASH16 & ASH24</title>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/ash16.js"></script>
+  <script src="js/ash24.js"></script>
+  <style>
+    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+    input, button { margin: 5px; padding: 5px; background: #222; color: #0f0; border: 1px solid #0f0; }
+    .output { margin-top: 10px; white-space: pre-wrap; line-height: 1.5; }
+    hr { margin: 20px 0; border: 1px solid #0f0; }
+    b { color: #fff; }
+    .label { color: #888; }
+  </style>
+</head>
+<body>
+
+<h2>ECC Key Generator (ESS251)</h2>
+<input type="number" id="eccInput" placeholder="Zadej privátní klíč k" min="1"/>
+<button id="genKeyBtn">Generuj klíč</button>
+<div class="output" id="eccOutput"></div>
+
+<hr>
+
+<h2>ASH16 Hash Test</h2>
+<input type="text" id="ash16Input" placeholder="Zadejte text"/>
+<button id="hash16Btn">Hash ASH16</button>
+<div class="output" id="ash16Output"></div>
+
+<hr>
+
+<h2>ASH24 Hash Test</h2>
+<input type="text" id="ash24Input" placeholder="Zadejte text"/>
+<button id="hash24Btn">Hash ASH24</button>
+<div class="output" id="ash24Output"></div>
+
+<script>
+// --- KNIHOVNA ESS251 ---
+const P_MOD = 251;
+const A_PARAM = 0;
+const B_PARAM = 7;
+const G_POINT = [1, 192];
+const ORDER_N = 252;
+
+function modN(n, m) {
+    return ((n % m) + m) % m;
+}
+
+function inv_mod(x, mod_val) {
+    x = modN(x, mod_val);
+    for (let i = 1; i < mod_val; i++) {
+        if ((x * i) % mod_val === 1) return i;
+    }
+    return null;
+}
+
+function point_doubling(P, a = A_PARAM, p = P_MOD) {
+    if (P === null) return null;
+    let [x, y] = P;
+    if (y === 0) return null;
+    let num = modN(3 * x * x + a, p);
+    let den = inv_mod(2 * y, p);
+    if (den === null) return null;
+    let slope = modN(num * den, p);
+    let x3 = modN(slope * slope - 2 * x, p);
+    let y3 = modN(slope * (x - x3) - y, p);
+    return [x3, y3];
+}
+
+function point_adding(P1, P2, p = P_MOD, a = A_PARAM) {
+    if (P1 === null) return P2;
+    if (P2 === null) return P1;
+    let [x1, y1] = P1;
+    let [x2, y2] = P2;
+    if (x1 === x2 && y1 !== y2) return null;
+    if (x1 === x2) return point_doubling(P1, a, p);
+
+    let num = modN(y2 - y1, p);
+    let den = inv_mod(modN(x2 - x1, p), p);
+    if (den === null) return null;
+    let slope = modN(num * den, p);
+    let x3 = modN(slope * slope - x1 - x2, p);
+    let y3 = modN(slope * (x1 - x3) - y1, p);
+    return [x3, y3];
+}
+
+function scalar_mult(k, P, a = A_PARAM, p = P_MOD, n = ORDER_N) {
+    let result = null;
+    let addend = P;
+    k = modN(k, n);
+    while (k > 0) {
+        if (k & 1) result = point_adding(result, addend, p, a);
+        addend = point_doubling(addend, a, p);
+        k >>= 1;
+    }
+    return result;
+}
+
+function pubkey_to_addr(pub) {
+    if (!pub) return "N/A (Bod v nekonečnu)";
+    return pub[0].toString(16).padStart(2, '0') +
+           pub[1].toString(16).padStart(2, '0');
+}
+
+// --- LOGIKA STRÁNKY ---
+$(document).ready(function() {
+
+  // ECC Generátor
+  $("#genKeyBtn").click(function() {
+    let k = parseInt($("#eccInput").val());
+    if (isNaN(k) || k <= 0) {
+      $("#eccOutput").text("Zadejte kladné číslo pro privátní klíč.");
+      return;
+    }
+
+    // Výpočet veřejného klíče: Q = k * G
+    let pubPoint = scalar_mult(k, G_POINT, A_PARAM, P_MOD, ORDER_N);
+
+    if (pubPoint === null) {
+      $("#eccOutput").text("Výsledkem je bod v nekonečnu.");
+    } else {
+      let hexKey = pubkey_to_addr(pubPoint);
+      $("#eccOutput").html(
+        `<span class="label">Souřadnice:</span>  X=<b>${pubPoint[0]}</b>, Y=<b>${pubPoint[1]}</b>\n` +
+        `<span class="label">Veřejný klíč:</span> <b>${hexKey.toUpperCase()}</b>`
+      );
+    }
+  });
+
+  // ASH16
+  $("#hash16Btn").click(function() {
+    let s = $("#ash16Input").val();
+    if (!s) return;
+    try {
+      let hashVal = ASH16(s);
+      $("#ash16Output").text(`Hash: ${hex16(hashVal)}`);
+    } catch(e) { $("#ash16Output").text("Chyba: " + e.message); }
+  });
+
+  // ASH24
+  $("#hash24Btn").click(function() {
+    let s = $("#ash24Input").val();
+    if (!s) return;
+    try {
+      let hashVal = ASH24(s);
+      $("#ash24Output").text(`Hash: ${hex24(hashVal)}`);
+    } catch(e) { $("#ash24Output").text("Chyba: " + e.message); }
+  });
+
+});
+</script>
+
+</body>
+</html>
