@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>ECC – diskrétní sčítání bodů</title>
+  <link rel="stylesheet" type="text/css" href="../css/dark.css">
+  <script src="../js/p5.min.js"></script>
+  <script src="../js/ecc.js"></script>
+
+  <style>
+    body { font-family: sans-serif; }
+  </style>
+</head>
+<body>
+
+<script>
+/* ====== PRIMES ====== */
+
+let primes = [];
+
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+function buildPrimes() {
+  for (let i = 3; i <= 256; i++) {
+    if (isPrime(i)) primes.push(i);
+  }
+}
+
+/* ====== ECC PARAMETRY ====== */
+
+const a = 0;
+const b = 7;
+
+// výchozí bod G
+const Gx = 15;
+const Gy = 13;
+
+let slider;
+
+/* ====== P5 ====== */
+
+function setup() {
+  createCanvas(350, 350);
+
+  buildPrimes();
+
+  slider = createSlider(0, primes.length - 1, primes.indexOf(17));
+  slider.position(10, height + 10);
+}
+
+function draw() {
+  background(32);
+
+  const p = primes[slider.value()];
+  const margin = 25;
+  const size = 300;
+  const cell = size / (p - 1);
+
+  /* grid */
+  stroke(0,100,0);
+  for (let i = 0; i < p; i++) {
+    line(margin, margin + i * cell, margin + size, margin + i * cell);
+    line(margin + i * cell, margin, margin + i * cell, margin + size);
+  }
+
+  /* rám */
+  stroke(0,128,0);
+  noFill();
+  rect(margin, margin, size, size);
+
+  textSize(9);
+  textAlign(LEFT, BOTTOM);
+
+  /* ECC výpočet */
+  let px = Gx;
+  let py = Gy;
+
+  let prevX = null;
+  let prevY = null;
+
+  for (let k = 1; k <= p; k++) {
+    const x = margin + px * cell;
+    const y = margin + (p - 1 - py) * cell;
+
+    /* spojnice */
+    if (prevX !== null) {
+      stroke(160);
+      strokeWeight(1);
+      line(prevX, prevY, x, y);
+    }
+
+    /* bod */
+    noStroke();
+    if (k === 1) {
+      fill(0);                // G
+    } else {
+      fill(255, 140, 0);      // ostatní
+    }
+    circle(x, y, 6);
+
+    /* popisek násobku */
+    fill(0,200,0);
+    text(k, x + 4, y - 4);
+
+    prevX = x;
+    prevY = y;
+
+    /* další krok */
+    try {
+      if (k === 1) {
+        [px, py] = point_doubling(px, py, a, p);
+      } else {
+        [px, py] = point_adding(px, py, Gx, Gy, p);
+      }
+    } catch {
+      break;
+    }
+  }
+
+  noStroke();
+  fill(0,200,0);
+  textSize(12);
+  text(`p = ${p}`, 10, 20);
+}
+</script>
+
+</body>
+</html>

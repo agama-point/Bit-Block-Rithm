@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>Modular inverse – vizualizace</title>
+  <link rel="stylesheet" type="text/css" href="../css/dark.css">
+  <script src="../js/p5.min.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+  </style>
+</head>
+<body>
+
+<script>
+let slider;
+let primesCheckbox;
+let primes = [];
+
+/* test prvočísla */
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+/* seznam prvočísel < 100 */
+function buildPrimes() {
+  for (let i = 2; i < 256; i++) {
+    if (isPrime(i)) primes.push(i);
+  }
+}
+
+/* rychlé umocňování modulo */
+function modPow(base, exp, mod) {
+  let result = 1;
+  base %= mod;
+  while (exp > 0) {
+    if (exp & 1) result = (result * base) % mod;
+    base = (base * base) % mod;
+    exp >>= 1;
+  }
+  return result;
+}
+
+function setup() {
+  createCanvas(350, 350);
+  angleMode(RADIANS);
+
+  buildPrimes();
+
+  slider = createSlider(2, 256, 7, 1);
+  slider.position(10, height + 10);
+
+  primesCheckbox = createCheckbox(' primes', false);
+  primesCheckbox.position(160, height + 8);
+}
+
+function draw() {
+  ///background(255);
+  background(32);
+
+  // omezení na prvočísla
+  if (primesCheckbox.checked()) {
+    let v = slider.value();
+    if (!isPrime(v)) {
+      // najdi nejbližší vyšší prvočíslo
+      for (let p of primes) {
+        if (p >= v) {
+          slider.value(p);
+          break;
+        }
+      }
+    }
+  }
+
+  const p = slider.value();
+  const cx = width / 2;
+  const cy = height / 2;
+  const r = 130;
+  const tickLen = 10;
+
+  //stroke(0);
+  stroke(128);
+  noFill();
+  circle(cx, cy, 2 * r);
+
+  textAlign(CENTER, CENTER);
+  textSize(10);
+
+  let pos = [];
+  for (let n = 0; n < p; n++) {
+    const a = -HALF_PI + n * TWO_PI / p;
+    pos[n] = {
+      x: cx + r * cos(a),
+      y: cy + r * sin(a),
+      a: a
+    };
+  }
+
+  // spojnice inverzí
+  stroke(0, 250,0);
+  for (let n = 1; n < p; n++) {
+    const inv = modPow(n, p - 2, p);
+    if ((n * inv) % p === 1 && n < inv) {
+      line(pos[n].x, pos[n].y, pos[inv].x, pos[inv].y);
+    }
+  }
+
+  // čárky, čísla, neexistující inverze
+  for (let n = 0; n < p; n++) {
+    const { x, y, a } = pos[n];
+
+    const x2 = cx + (r + tickLen) * cos(a);
+    const y2 = cy + (r + tickLen) * sin(a);
+
+    stroke(0,200,0);
+    line(x, y, x2, y2);
+
+    noStroke();
+    //fill(0);
+    fill(200);
+    const tx = cx + (r + tickLen + 12) * cos(a);
+    const ty = cy + (r + tickLen + 12) * sin(a);
+    text(n, tx, ty);
+
+    if (n !== 0) {
+      const inv = modPow(n, p - 2, p);
+      if ((n * inv) % p !== 1) {
+        //fill(255, 140, 0);
+        fill(0, 255, 0);
+        circle(x, y, 5);
+      }
+    }
+  }
+
+  noStroke();
+  ///fill(0);
+  fill(0, 255, 0);
+  textSize(12);
+  text(`mod p = ${p}`, 60, height - 15);
+}
+</script>
+
+</body>
+</html>

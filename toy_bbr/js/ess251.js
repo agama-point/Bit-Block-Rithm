@@ -1,6 +1,9 @@
 // ESS251: Elliptic Signature Scheme for p=251
 // Educational ECC toy library
 
+const ESS251_VER = "0.2 | 2026/01";
+window.ESS251_VER = ESS251_VER;
+
 const P_MOD = 251;
 const A_PARAM = 0;
 const B_PARAM = 7;
@@ -112,4 +115,18 @@ function pubkey_to_addr(pub){
         return pub[0].toString(16).padStart(2,'0') +
                pub[1].toString(16).padStart(2,'0');
     }
+
+function hexa_to_point(hex) {
+    if (hex.length !== 4) {
+        throw new Error("Hex string must have length 4.");
+    }
+    const x = parseInt(hex.slice(0, 2), 16);
+    const y = parseInt(hex.slice(2, 4), 16);
+
+    if (Number.isNaN(x) || Number.isNaN(y)) {
+        throw new Error("Invalid hex string.");
+    }
+    return [x, y];
+}
+
 

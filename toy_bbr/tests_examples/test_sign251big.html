@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>ESS251 ECC – Detailní proces</title>
+
+<script src="../js/jquery.min.js"></script>
+<script src="../js/ash24.js"></script>
+<script src="../js/ess251.js"></script>
+
+<style>
+  body { font-family: monospace; background:#111; color:#0f0; padding:20px; }
+  input, button { padding:5px; margin:5px; }
+  #log {
+    margin-top:15px;
+    white-space:pre;
+    overflow:auto;
+    max-height:600px;
+    border:1px solid #0f0;
+    padding:10px;
+  }
+  hr { border:1px solid #0f0; margin:20px 0; }
+</style>
+</head>
+<body>
+
+<h2>ESS251 – Kompletní podpis a ověření (krok za krokem)</h2>
+
+Privátní klíč:
+<input type="number" id="input_key" value="111">
+
+Zpráva:
+<input type="text" id="input_msg" value="msg">
+
+<button id="runBtn">Spustit</button>
+
+<div id="log"></div>
+
+<script>
+
+function hex24(n) {
+  return "0x" + n.toString(16).padStart(6,'0');
+}
+
+function log(txt){
+  $("#log").append(txt + "\n");
+}
+
+function section(title){
+  log("\n====================================================");
+  log(title);
+  log("====================================================");
+}
+
+$("#runBtn").click(function(){
+
+  $("#log").text("");
+
+  let priv = parseInt($("#input_key").val());
+  let msg  = $("#input_msg").val();
+
+  if (!msg) {
+    log("❌ Zadejte zprávu.");
+    return;
+  }
+
+  section("1) GENEROVÁNÍ VEŘEJNÉHO KLÍČE");
+
+  log("Funkce: scalar_mult(priv, G_POINT)");
+  log("Vstup:");
+  log("  priv = " + priv);
+  log("  G_POINT = [" + G_POINT + "]");
+  
+  let pub = scalar_mult(priv, G_POINT);
+
+  log("Výstup:");
+  log("  veřejný bod P = [" + pub + "]");
+  log("  x = " + pub[0]);
+  log("  y = " + pub[1]);
+
+  log("\nFunkce: pubkey_to_addr(pub)");
+  log("Vstup:");
+  log("  pub = [" + pub + "]");
+
+  let pub_hex = pubkey_to_addr(pub);
+
+  log("Výstup:");
+  log("  hex veřejného klíče = " + pub_hex);
+
+
+
+  section("2) HASH ZPRÁVY");
+
+  log("Funkce: ASH24(input_msg)");
+  log("Vstup:");
+  log('  input_msg = "' + msg + '"');
+
+  let h_raw = ASH24(msg);
+  let hmsg  = hex24(h_raw);
+
+  log("Výstup:");
+  log("  ASH24(msg) = " + h_raw);
+  log("  hex24(...) = " + hmsg);
+
+
+
+  section("3) PODPIS ZPRÁVY");
+
+  log("Funkce: signToy(priv, h_raw)");
+  log("Vstup:");
+  log("  priv = " + priv);
+  log("  h_raw = " + h_raw);
+
+  let sig = signToy(priv, h_raw);
+
+  log("Výstup objektu:");
+  log("  sig.R_point = [" + sig.R_point + "]");
+  log("  sig.r = " + sig.r);
+  log("  sig.s = " + sig.s);
+
+  log("\nMezikroky ověřitelné ručně:");
+
+  let L = scalar_mult(sig.s, G_POINT);
+  log("  L = scalar_mult(s, G) = [" + L + "]");
+
+  let e_Pub = scalar_mult(h_raw % ORDER_N, pub);
+  log("  e*Pub = scalar_mult(h mod n, Pub) = [" + e_Pub + "]");
+
+  let P = point_adding(sig.R_point, e_Pub);
+  log("  P = R + e*Pub = [" + P + "]");
+
+
+
+  section("4) OVĚŘENÍ PODPISU");
+
+  log("Funkce: verifyToy(pub, h_raw, sig)");
+  log("Vstup:");
+  log("  pub = [" + pub + "]");
+  log("  h_raw = " + h_raw);
+  log("  sig = { r:" + sig.r + ", s:" + sig.s + " }");
+
+  let valid = verifyToy(pub, h_raw, sig);
+
+  log("Výstup:");
+  log("  valid = " + valid);
+
+  log("\nProč je podpis validní?");
+  log("  Podpis je validní, pokud platí:");
+  log("     s*G = R + e*Pub");
+  log("  což znamená, že podpis mohl vytvořit pouze držitel privátního klíče.");
+  log("  Zde:");
+  log("     L = [" + L + "]");
+  log("     P = [" + P + "]");
+
+  if(valid){
+    log("\n  => L == P  →  Podpis je VALIDNÍ ✅");
+  } else {
+    log("\n  => L != P  →  Podpis je NEPLATNÝ ❌");
+  }
+
+  section("KONEC PROCESU");
+
+});
+
+</script>
+</body>
+</html>

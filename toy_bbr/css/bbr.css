@@ -1,0 +1,161 @@
+body {
+  margin: 0;
+  font-family: Verdana, sans-serif;
+  color: LightGray;
+  background-color: black;
+}
+
+pre {
+    margin-top:10px;
+    color:#0f0;
+    font-family:monospace;
+    font-size: 1.2em;
+}
+
+#log {
+    background: #000;
+    color: #0f0;
+    padding: 10px;
+    border: 1px dashed #0f0;
+    margin-top: 20px;
+    white-space: pre-wrap;
+    font-size: 1.2em;
+}
+
+
+a {
+    color: orange;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {  color: white; }
+
+
+.header {
+  background-color: #222;
+  color: white;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 39px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.header a {
+  color: white;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.header a:hover { color: orange; }
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.content {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel {
+  border: 1px solid #444;
+  padding: 15px;
+}
+
+button {
+  background: #222;
+  color: white;
+  border: 1px solid #666;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: orange;
+  color: orange;
+}
+
+@media (max-width: 650px) {
+  .header {
+    flex-direction: column;
+    height: auto;
+  }
+}
+
+.user-menu {
+    background: #222;
+    padding: 8px 15px;
+    position: fixed; /* Přidat */
+    top: 39px;       /* Přidat (výška headeru) */
+    width: 100%;     /* Přidat */
+    z-index: 9;      /* Přidat (o něco méně než header) */
+    border-bottom: 1px solid #444;
+}
+
+.content {
+    margin-top: 85px; /* Zvětšit (39px header + cca 45px menu) */
+}
+
+.user-menu a {
+    color: #ccc;
+    margin-right: 20px;
+    text-decoration: none;
+}
+
+.user-menu a:hover {
+    color: orange;
+}
+
+
+.wallet-table {
+  width: 800px;
+  max-width: 100%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.wallet-table th,
+.wallet-table td {
+  border: 1px solid #444;
+  padding: 6px 8px;
+}
+
+.wallet-table th {
+  background: #222;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.delete-btn:hover {
+  color: red;
+}
+
+
+.tx-table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 13px; }
+.tx-table th, .tx-table td { border: 1px solid #444; padding: 8px; text-align: left; }
+.tx-table th { background: #222; color: #0f0; }
+.tx-table tr:hover { background: #1a1a1a; }
+.addr { color: #888; font-family: monospace; }
+.val { font-weight: bold; color: #fff; }
+.sig { color: #555; font-size: 10px; }
+.spent-true { opacity: 0.4; text-decoration: line-through; }
+.spent-false { color: #0f0; }
+

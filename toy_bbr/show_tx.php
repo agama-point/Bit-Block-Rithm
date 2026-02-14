@@ -1,4 +1,6 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 $mainDbFile = __DIR__ . "/main.db";   // uprav dle své DB
 $txid = $_GET['txid'] ?? '';
 
@@ -86,14 +88,12 @@ td:first-child { font-weight:bold; color:#fff; }
 </tr>
 </table>
 
-
 <hr>
 <hr>
 <h2>Detailní rozbor a validace transakce</h2>
 
 <div class="explain">
 <?php
-
 echo "<h3>1) Základní parsování dat</h3>";
 echo "<b>Interní ID (rowid):</b> {$row['id']}<br>";
 echo "<b>TXID:</b> {$row['txid']}<br>";
@@ -150,7 +150,6 @@ if($row['sig']){
 
 <div class="explain">
     <h3>3) Kryptografická část</h3>
-    </code>
     <div id="cryptoDetail"></div>
     <div style="margin-top: 20px; color: #888;">Debug Log:</div>
     <pre id="log"></pre>
@@ -163,97 +162,117 @@ if($row['sig']){
     $(document).ready(function(){
         $("#log").text(""); // Vyčistit log
 
-log("r=<?= $r ?> , s=<?= $s ?>");
-log("----- KEYS -----");
-let priv = 111;
-log("Funkce: scalar_mult(priv, G_POINT)");
-log("Vstup:");
-log("  priv = " + priv);
-log("  G_POINT = [" + G_POINT + "]");
-let pub = scalar_mult(priv, G_POINT);
-       
-log("----- HASH -----");
-let msg = "<?= $msg ?>";
-let h_raw = ASH24(msg);
-let hash_hex  = hex24(h_raw);
-
-log("Zpráva: " + msg);
-log("h_raw: " + h_raw);
-log("hash_hex: " + hash_hex);
-
-log("----- SIGN -----");
-log("Funkce: signToy(priv, h_raw)");
-log("Vstup:");
-log("  priv = " + priv);
-log("  h_raw = " + h_raw);
-
-let sigT = signToy(priv, h_raw);
-
-log("Výstup objektu:");
-log("  sigT.R_point = [" + sigT.R_point + "]");
-log("  sigT.r = " + sigT.r);
-log("  sigT.s = " + sigT.s);
-
-log("\nMezikroky ověřitelné ručně:");
-
-let L = scalar_mult(sigT.s, G_POINT);
-log("  L = scalar_mult(s, G) = [" + L + "]");
-
-let e_Pub = scalar_mult(h_raw % ORDER_N, pub);
-log("  e*Pub = scalar_mult(h mod n, Pub) = [" + e_Pub + "]");
-
-let P = point_adding(sigT.R_point, e_Pub);
-log("  P = R + e*Pub = [" + P + "]");
-
-log("----- VERIFY -----");
-log("Funkce: verifyToy(pub, h_raw, sig)");
-log("Vstup:");
-log("  pub = [" + pub + "]");
-log("  h_raw = " + h_raw);
-log("  sig = { r:" + sigT.r + ", s:" + sigT.s + " }");
-
-let valid = verifyToy(pub, h_raw, sigT);
-
-log("Výstup:");
-log("  valid = " + valid);
-
-log("\nProč je podpis validní?");
-log("  Podpis je validní, pokud platí:");
-log("     s*G = R + e*Pub");
-log("  což znamená, že podpis mohl vytvořit pouze držitel privátního klíče.");
-log("  Zde:");
-log("     L = [" + L + "]");
-log("     P = [" + P + "]");
-
-if(valid){
-    log("\n  => L == P  →  Podpis je VALIDNÍ ✅");
-} else {
-    log("\n  => L != P  →  Podpis je NEPLATNÝ ❌");
-}     
-
-let sig2 = { 
-  r: parseInt('<?= $r ?>'), 
-  s: parseInt('<?= $s ?>'),
- // Rekonstrukce bodu R pro interní potřeby verifyToy
- R_point: scalar_mult(parseInt('<?= $r ?>'), G_POINT) 
-};
+        log("===== SESSION DEBUG =====");
+        <?php
+        // Načtení session pro JS logování a proměnnou priv
+        $nick = $_SESSION['nick'] ?? null;
+        $k1 = $_SESSION['k1'] ?? 111; // Výchozí 111 pokud k1 není v session
+        $mdel = $_SESSION['minerdelay'] ?? null;
         
-//let pub = addr_to_pubkey("<?= $row['from_addr'] ?>");
-log("Veřejný klíč: [" + pub + "]");
+        echo "log('SESSION[nick]: ' + " . json_encode($nick) . ");\n";
+        echo "log('SESSION[k1]: ' + " . json_encode($k1) . ");\n";
+        echo "log('SESSION[minerdelay]: ' + " . json_encode($mdel) . ");\n";
+        ?>
+        log("=========================\n");
 
-let ok = verifyToy(pub, hash, sig2);
-log("Výsledek verifyToy: " + ok);
+        log("r=<?= $r ?> , s=<?= $s ?>");
+        log("----- KEYS -----");
+        
+        // Implementace k1 ze session
+        let priv = <?= json_encode($k1) ?>; 
+        
+        log("Funkce: scalar_mult(priv, G_POINT)");
+        log("Vstup:");
+        log("  priv [session_k1] = " + priv);
+        log("  G_POINT = [" + G_POINT + "]");
+        let pub = scalar_mult(priv, G_POINT);
+        let pubKeyAddr = pubkey_to_addr(pub);
+        log("  pubkey_to_addr ->" + pubKeyAddr);
+       
 
-let html = '';
-html += '<br><b>ASH24 hash:</b> ' + hash + '<br>';
-html += '<b>Public key z adresy:</b> (' + pub[0] + ',' + pub[1] + ')<br>';
+        log("----- HASH -----");
+        let msg = "<?= $msg ?>";
+        let h_raw = ASH24(msg);
+        let hash_hex  = hex24(h_raw);
 
-html += '<br><b>Princip verifikace:</b><br>';
-html += '1) Spočítáme w = s⁻¹ mod n<br>';
-html += '2) u1 = hash * w mod n<br>';
-html += '3) u2 = r * w mod n<br>';
-html += '4) Bod R = u1·G + u2·Pub<br>';
-html += '5) Validní pokud R.x mod n = r<br><br>';
+        log("Zpráva: " + msg);
+        log("h_raw: " + h_raw);
+        log("hash_hex: " + hash_hex);
+
+        log("----- SIGN -----");
+        log("Funkce: signToy(priv, h_raw)");
+        //log("Vstup:");
+        //log("  priv = " + priv);
+        //log("  h_raw = " + h_raw);
+        log("Vstup: " + "  priv = " + priv + " | h_raw = " + h_raw);   
+
+        let sigT = signToy(priv, h_raw);
+
+        //log("Výstup objektu:");
+        //log("  sigT.R_point = [" + sigT.R_point + "]");
+        //log("  sigT.r = " + sigT.r);
+        //log("  sigT.s = " + sigT.s);
+        log("Výstup: R_point[" + sigT.R_point + "]" + " | sigT.r = " + sigT.r + " | sigT.s = " + sigT.s);
+
+        log("\nMezikroky ověřitelné ručně:");
+
+        let L = scalar_mult(sigT.s, G_POINT);
+        log("  L = scalar_mult(s, G) = [" + L + "]");
+
+        let e_Pub = scalar_mult(h_raw % ORDER_N, pub);
+        log("  e*Pub = scalar_mult(h mod n, Pub) = [" + e_Pub + "]");
+
+        let P = point_adding(sigT.R_point, e_Pub);
+        log("  P = R + e*Pub = [" + P + "]");
+
+        log("----- VERIFY -----");
+        log("Funkce: verifyToy(pub, h_raw, sig)");
+        //log("Vstup:");
+        //log("  pub = [" + pub + "]");
+        //log("  h_raw = " + h_raw);
+        //log("  sig = { r:" + sigT.r + ", s:" + sigT.s + " }");
+        log("Vstup:" + "  pub = [" + pub + "]" + " | h_raw = " + h_raw + " | sig = { r:" + sigT.r + ", s:" + sigT.s + " }");
+
+        let valid = verifyToy(pub, h_raw, sigT);
+
+        log("Výstup:" + "  valid = " + valid);
+        //log("  valid = " + valid);
+
+        log("\nProč je podpis validní?");
+        log("  Podpis je validní, pokud platí: s*G = R + e*Pub");
+        log("  což znamená, že podpis mohl vytvořit pouze držitel privátního klíče.");
+        log("  Zde:" +" |  L = [" + L + "]" + " |  P = [" + P + "]");
+        //log("      L = [" + L + "]");
+        //log("      P = [" + P + "]");
+
+        if(valid){
+            log("\n  => L == P  →  Podpis je VALIDNÍ ✅");
+        } else {
+            log("\n  => L != P  →  Podpis je NEPLATNÝ ❌");
+        }      
+
+        let sig2 = { 
+          r: parseInt('<?= $r ?>'), 
+          s: parseInt('<?= $s ?>'),
+          R_point: scalar_mult(parseInt('<?= $r ?>'), G_POINT) 
+        };
+        
+        log("Veřejný klíč: [" + pub + "]");
+
+        let hash = hash_hex; // definice hash pro následné použití
+        let ok = verifyToy(pub, h_raw, sig2);
+        log("Výsledek verifyToy: " + ok);
+
+        let html = '';
+        html += '<br><b>ASH24 hash:</b> ' + hash + '<br>';
+        html += '<b>Public key z adresy:</b> (' + pub[0] + ',' + pub[1] + ')<br>';
+
+        html += '<br><b>Princip verifikace:</b><br>';
+        html += '1) Spočítáme w = s⁻¹ mod n<br>';
+        html += '2) u1 = hash * w mod n<br>';
+        html += '3) u2 = r * w mod n<br>';
+        html += '4) Bod R = u1·G + u2·Pub<br>';
+        html += '5) Validní pokud R.x mod n = r<br><br>';
 
         if(ok){
             html += '<span class="ok">✓ Podpis je kryptograficky VALIDNÍ</span>';

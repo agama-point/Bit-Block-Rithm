@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASH24 test</title>
+<style>
+body {
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+}
+</style>
+</head>
+<body>
+
+<pre id="out"></pre>
+
+<script src="../js/ash24.js"></script>
+<script>
+
+const out = document.getElementById("out");
+const log = s => out.textContent += s + "\n";
+
+log("--- test --- bitstring | number");
+
+let i1 = new Uint8Array([1]);
+log("i1 " + i1[0].toString(2).padStart(8,"0"));
+log("b01 " + hex24(ASH24(i1)));
+
+let h1 = ASH24(new Uint8Array([1]));
+let h2 = ASH24(new Uint8Array([1,0]));
+
+log(bytesToBin24(new Uint8Array([1])) + " " + hex24(h1));
+log(bytesToBin24(new Uint8Array([1,0])) + " " + hex24(h2));
+
+log("-".repeat(30));
+log("--- test --- string");
+
+log("A " + hex24(ASH24("A")));
+log("AGAMA " + hex24(ASH24("AGAMA")));
+log("Agama123 " + hex24(ASH24("Agama123")));
+log("AGAMA151418 " + hex24(ASH24("AGAMA151418")));
+
+
+log("Agama " + hex24(ASH24("Agama")));
+log("Agama is testing a hash function concept. " +
+    hex24(ASH24("Agama is testing a hash function concept.")));
+
+log("Agama is testing a hash function concept: " +
+    hex24(ASH24("Agama is testing a hash function concept")));
+
+</script>
+<hr />
+<pre>
+Python:
+Input: 1 | bin: 000000000000000000000001 | Hash: 5f3bcc | bin: 010111110011101111001100
+Input: 256 | bin: 000000000000000100000000 | Hash: f55156 | bin: 111101010101000101010110
+Input: 1023 | bin: 000000000000001111111111 | Hash: 4dd751 | bin: 010011011101011101010001
+Input: 43981 | bin: 000000001010101111001101 | Hash: bd9ce8 | bin: 101111011001110011101000
+--- test --- bitstring | number
+i1 00000001
+b01 0x5f3bcc
+000000000000000000000001 0x5f3bcc
+000000000000000100000000 0xf55156
+------------------------------
+--- test --- string
+A 0x7d9ab5
+AGAMA 0x9f120a
+Agama 0x6217ef
+Agama is testing a hash function concept. 0xba8b4e
+Agama is testing a hash function concept: 0x30566f
+</pre>
+</body>
+</html>
