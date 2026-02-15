@@ -1,10 +1,11 @@
-<h3>Posledních 10 transakcí</h3>
+<h3>Last 21 Transactions</h3>
 <table class="tx-table">
     <thead>
         <tr>
             <th>ID</th>
             <th>TXID</th>
             <th>From</th>
+            <th>Prev_txid</th>
             <th>To</th>
             <th>Val 1</th>
             <th>Val 2</th>
@@ -15,7 +16,7 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 10");
+        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 21");
         while($row = $res->fetchArray(SQLITE3_ASSOC)): ?>
         <tr>
             <td><?= $row['id'] ?></td>
@@ -25,6 +26,7 @@
          <strong><?= htmlspecialchars($row['txid']) ?></strong></a></td>
 
             <td class="addr"><?= $row['from_addr'] ?></td>
+            <td class="val"><?= $row['prev_txid'] ?></td>
             <td class="addr"><?= $row['to_addr'] ?></td>
             <td class="val"><?= $row['val1'] ?></td>
             <td class="val"><?= $row['val2'] ?></td>

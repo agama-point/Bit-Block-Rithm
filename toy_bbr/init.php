@@ -47,7 +47,7 @@ try {
     $mainDb->exec("
         CREATE TABLE IF NOT EXISTS users (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            nick TEXT NOT NULL UNIQUE,
+            nick TEXT NOT NULL,
             psw  TEXT NOT NULL,
             k1   INTEGER DEFAULT 0,
             k2   INTEGER DEFAULT 0,
@@ -60,18 +60,20 @@ try {
 
     $messages[] = "Table <b>users</b> in main.db is ready.";
 
-    /* ---- create transactions table ---- */
+    /* ---- create transactions table ---- ?txid  INTEGER NOT NULL UNIQUE,*/
     $mainDb->exec("
-        CREATE TABLE IF NOT EXISTS transactions (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            txid      TEXT NOT NULL UNIQUE,
-            sig       TEXT,
-            from_addr TEXT,
-            to_addr   TEXT NOT NULL,
-            val1      INTEGER NOT NULL,
-            val2      INTEGER NOT NULL,
-            mp        INTEGER NOT NULL
-        )
+    CREATE TABLE IF NOT EXISTS transactions (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      txid       INTEGER NOT NULL,
+      sig        TEXT,
+      from_addr  TEXT,
+      prev_txid  INTEGER, 
+      to_addr    TEXT NOT NULL,
+      val1       INTEGER NOT NULL,
+      val2       INTEGER NOT NULL,
+      mp         INTEGER NOT NULL,
+      utxo_time  INTEGER
+      )
     ");
 
     $messages[] = "Table <b>transactions</b> in main.db is ready.";
@@ -107,15 +109,63 @@ try {
 /* ---- create utxo table ---- */
     $mainDb->exec("
         CREATE TABLE IF NOT EXISTS utxo (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            txid      TEXT NOT NULL,
-            owner     TEXT NOT NULL,
-            value     INTEGER NOT NULL,
-            spent     INTEGER NOT NULL
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            txid    INTEGER NOT NULL,
+            owner   TEXT NOT NULL,
+            value   INTEGER NOT NULL,
+            spent   INTEGER NOT NULL
         )
     ");
 
     $messages[] = "Table <b>utxo</b> in main.db is ready.";
+
+
+/* ---- create blockchain table ---- */
+    $mainDb->exec("
+        CREATE TABLE IF NOT EXISTS blockchain (
+            id_block   INTEGER PRIMARY KEY AUTOINCREMENT,
+            prev_hash  TEXT,
+            tx_root    TEXT,
+            nonce      INTEGER,
+            timestamp  INTEGER,
+            tx_txt     TEXT,
+            note_block TEXT,  
+            k          TEXT
+        )
+    ");
+
+    $messages[] = "Table <b>blockchain</b> in main.db is ready.";
+
+    /* ---- initialize genesis block ---- */
+    $checkGenesis = $mainDb->querySingle("SELECT COUNT(*) FROM blockchain WHERE id_block = 1");
+
+    if ($checkGenesis == 0) {
+
+        $stmt = $mainDb->prepare("
+            INSERT INTO blockchain
+            (id_block, prev_hash, tx_root, nonce, timestamp, tx_txt, note_block,k)
+            VALUES
+            (1, :prev_hash, :tx_root, :nonce, :timestamp, :tx_txt, :note_block, :k)
+        ");
+
+        $stmt->bindValue(":prev_hash", "000000", SQLITE3_TEXT);
+        $stmt->bindValue(":tx_root", "00e267", SQLITE3_TEXT);
+        $stmt->bindValue(":nonce", 2180891, SQLITE3_INTEGER);
+        $stmt->bindValue(":timestamp", 1742976064, SQLITE3_INTEGER);
+        $stmt->bindValue(":tx_txt", "1|000000|test", SQLITE3_TEXT);
+        $stmt->bindValue(":note_block", "BBR.genesis|h.000007", SQLITE3_TEXT);
+        $stmt->bindValue(":k", 1, SQLITE3_INTEGER);
+
+        $stmt->execute();
+
+        $messages[] = "Genesis block inserted.";
+    } else {
+        $messages[] = "Genesis block already exists.";
+    }
+
+
+
+
 
 
 
@@ -148,3 +198,8 @@ if (php_sapi_name() === "cli") {
     </body>
     </html>";
 }
+
+
+
+
+

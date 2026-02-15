@@ -1,11 +1,14 @@
+<div class="container">
 <?php 
-
-include "show_miner.php"; 
-//include "table_utxo_all.php"; 
-
+include "u_coinbase.php"; 
 ?>
-
-
+</div>
+<div class="container">
+<?php 
+include "show_miner.php"; 
+?>
+</div>
+<hr />
 Base string:
 <input type="text" id="base" value="AGAMA">
 <button id="start">START</button>
@@ -13,7 +16,6 @@ Base string:
 <pre id="output"></pre>
 
 <script>
-
 let running = false;
 
 function mine(prefix, difficulty, callback) {
@@ -98,7 +100,8 @@ AGAMA151418        *   000007  000000000000000000000111
 0645657            *   00000f  000000000000000000001111 
 </pre>
 
-<div class="container">
-    <?php include "u_coinbase.php"; ?>
-</div>
-<?php include "table_utxo.php"; ?>
+<?php 
+include "table_utxo.php"; 
+include "table_tx2m.php";
+
+?>

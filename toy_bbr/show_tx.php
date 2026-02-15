@@ -145,7 +145,8 @@ if((int)$row['mp'] === 0){
 <?php
 if($row['sig']){
     list($r,$s) = explode(",",$row['sig']);
-    $msg = $row['from_addr']."|".$row['to_addr']."|".$row['val2'];
+    //let msg = myAddr + "|" + txid + "|" + to + "|" + amount;
+    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2'];
 ?>
 
 <div class="explain">
