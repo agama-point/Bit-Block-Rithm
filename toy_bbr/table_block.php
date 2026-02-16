@@ -1,4 +1,4 @@
-<h3>Posledních 10 bloků</h3>
+<h3>Blockchain | Last 16 blocks</h3>
 
 <table class="tx-table">
     <thead>
@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM blockchain ORDER BY id_block DESC LIMIT 10");
+        $res = $db->query("SELECT * FROM blockchain ORDER BY id_block DESC LIMIT 16");
         while($row = $res->fetchArray(SQLITE3_ASSOC)):
         ?>
         <tr>
@@ -41,8 +41,29 @@
                 <?= date('ymd | H:i', $row['timestamp']) ?>
             </td>
 
-            <td style="font-size: 0.85em; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
-                <?= htmlspecialchars($row['tx_txt']) ?>
+            <td style="font-size: 0.85em; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                <?php 
+                $tx_raw = trim($row['tx_txt']);
+                if (!empty($tx_raw)) {
+                    // Rozdělíme text podle čárky
+                    $tx_array = explode(',', $tx_raw);
+                    $links = [];
+
+                    foreach ($tx_array as $tx_id) {
+                        $tx_id = trim($tx_id); // Odstranění mezer
+                        if (is_numeric($tx_id)) {
+                            // Vytvoření odkazu pro každé ID transakce
+                            $links[] = '<a href="show_tx.php?txid=' . urlencode($tx_id) . '" style="color:#0cf; text-decoration:none;">' . htmlspecialchars($tx_id) . '</a>';
+                        } else {
+                            $links[] = htmlspecialchars($tx_id);
+                        }
+                    }
+                    // Výpis odkazů oddělených čárkou a mezerou
+                    echo implode(', ', $links);
+                } else {
+                    echo '<span style="color:#666;">empty</span>';
+                }
+                ?>
             </td>
 
             <td>

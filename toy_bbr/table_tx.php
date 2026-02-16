@@ -1,4 +1,4 @@
-<h3>Last 21 Transactions</h3>
+<h3>Last 16 Transactions</h3>
 <table class="tx-table">
     <thead>
         <tr>
@@ -16,7 +16,7 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 21");
+        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 16");
         while($row = $res->fetchArray(SQLITE3_ASSOC)): ?>
         <tr>
             <td><?= $row['id'] ?></td>

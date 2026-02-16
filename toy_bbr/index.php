@@ -61,13 +61,13 @@ if(isset($_SESSION['nick'])):
 
 <!-- USER HORIZONTAL MENU -->
 <div class="user-menu" style="display:block !important; border: 1px solid green;">
-  <a href="index.php?page=home">home</a>
-  <a href="index.php?page=keys">keys</a>
-  <a href="index.php?page=wallet">wallet</a>
-  <a href="index.php?page=mining">mining</a>
-  <a href="index.php?page=blockchain">blockchain</a>
-  <a href="index.php?page=system">system</a>
-  <a href="index.php?page=tests">tests</a>
+  <a href="index.php?page=home"> home</a> |&nbsp;
+  <a href="index.php?page=keys"> keys</a> |&nbsp;
+  <a href="index.php?page=wallet"> wallet</a> |&nbsp;
+  <a href="index.php?page=mining"> mining</a> |&nbsp;
+  <a href="index.php?page=blockchain"> blockchain</a> |&nbsp;
+  <a href="index.php?page=system"> system</a> |&nbsp; 
+  <a href="index.php?page=tests"> tests</a> 
 </div>
 <?php 
 endif; 

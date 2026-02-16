@@ -1,7 +1,7 @@
 <?php
 $db = new SQLite3(__DIR__ . "/main.db");
 
-echo "<h3>Database Overview: main.db</h3>";
+echo "<h3>Database Overview: ****************.db</h3>";
 echo "<table border='1' cellpadding='5'>";
 echo "<tr><th>Table Name</th><th>Number of Records</th><th>Last Modified (if available)</th></tr>";
 
@@ -38,4 +38,4 @@ while($tbl = $tablesRes->fetchArray(SQLITE3_ASSOC)){
     echo "<tr><td>$tableName</td><td>$numRecords</td><td>$lastMod</td></tr>";
 }
 
-echo "</table>";
+echo "</table><hr />";

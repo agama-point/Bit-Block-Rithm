@@ -19,9 +19,14 @@ pre {
     border: 1px dashed #0f0;
     margin-top: 20px;
     white-space: pre-wrap;
-    font-size: 1.2em;
+    font-size: 0.9em;
 }
 
+#log .b {
+    color: orange;    
+    font-weight: bold; 
+    display: inline;    /* nutné pro pre */
+}
 
 a {
     color: orange;
