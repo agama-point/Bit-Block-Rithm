@@ -102,6 +102,9 @@ echo "<b>Input value (val1):</b> {$row['val1']}<br>";
 echo "<b>Sent amount (val2):</b> {$row['val2']}<br>";
 echo "<b>Change:</b> ".((int)$row['val1']-(int)$row['val2'])."<br>";
 echo "<b>Timestamp:</b> ".date("Y-m-d H:i:s",(int)$row['utxo_time'])."<br>";
+
+$from_adr = $row['from_addr'];
+$to_adr = $row['from_addr'];
 ?>
 </div>
 
@@ -136,8 +139,7 @@ if((int)$row['mp'] === 0){
 <?php
 if($row['sig']){
     list($r,$s) = explode(",",$row['sig']);
-    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2'];
-    $from_adr = $row['from_addr'];
+    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2'];    
 ?>
 
 <div class="explain">
@@ -154,7 +156,7 @@ if($row['sig']){
     $(document).ready(function(){
         $("#log").text(""); // Clear log
 
-        log("===== SESSION DEBUG =====");
+        log("======== SESSION ========");
         <?php
         $nick = $_SESSION['nick'] ?? null;
         $k1 = $_SESSION['k1'] ?? 111;
@@ -162,23 +164,10 @@ if($row['sig']){
         
         echo "log('SESSION[nick]: ' + " . json_encode($nick) . ");\n";
         echo "log('SESSION[k1]: ' + " . json_encode($k1) . ");\n";
-        echo "log('SESSION[minerdelay]: ' + " . json_encode($mdel) . ");\n";
+        echo "log('SESSION[minerdelay]: ' + " . json_encode($mdel) . ");\n\n";
         ?>
-        log("=========================\n");
-
-        log("r=<?= $r ?> , s=<?= $s ?>");
-        //log("from_addr: <? $from_adr ?>");
-        log("From Address (DB): <?= htmlspecialchars($row['from_addr']) ?>");
-        
-        log("----- KEYS -----");
-        //let from_pub = hexa_to_point(<?= htmlspecialchars($row['from_addr']) ?>);
-        let from_pub = hexa_to_point("<?= htmlspecialchars($row['from_addr']) ?>");
-        log("From Pub (reconstructed) hexa_to_point() -> [" + from_pub + "]");
-        //log("hexa_to_point -> "+ from_pub);
-
-        
-        let priv = <?= json_encode($k1) ?>; 
-        
+        log("-------------------------\n");
+        let priv = <?= json_encode($k1) ?>;        
         log("Function: scalar_mult(priv, G_POINT)");
         log("Input:");
         log("  priv [session_k1] = " + priv);
@@ -188,6 +177,23 @@ if($row['sig']){
         let pubKeyAddr = pubkey_to_addr(pub);
         log("  pubkey_to_addr(pub) ->" + pubKeyAddr);
 
+        log("====== TX_DATABASE ======");
+        log("r=<?= $r ?> , s=<?= $s ?>");
+        log("[<span class=\"b\"><?= $r ?>,<?= $s ?></span>]");
+
+        //log("from_addr: <? $from_adr ?>");
+        log("----- KEYS -----");
+        log("From Address (DB): <?= htmlspecialchars($row['from_addr']) ?>");
+        //let from_pub = hexa_to_point(<?= htmlspecialchars($row['from_addr']) ?>);
+        let from_pub = hexa_to_point("<?= htmlspecialchars($row['from_addr']) ?>");
+        log("From Pub (reconstructed) hexa_to_point() -> [" + from_pub + "]");
+        //log("hexa_to_point -> "+ from_pub);
+
+        log("To Address (DB): <?= htmlspecialchars($row['to_addr']) ?>");
+        let to_pub = hexa_to_point("<?= htmlspecialchars($row['to_addr']) ?>");
+        log("To Pub (reconstructed) hexa_to_point() -> [" + to_pub + "]");
+        //log("hexa_to_point -> "+ from_pub);
+        
         log("----- HASH -----");
         let msg = "<?= $msg ?>";
         let h_raw = ASH24(msg);
@@ -246,14 +252,12 @@ if($row['sig']){
         log("verifyToy sig2 result test: " + ok);
 
 
-
-
 log(" ");
         log("============ CRYPTO TESTS 2 =========\n");
 
         // TEST 1: VALID (Using the correct public key)
         log("TEST 1: Verification with correct Public Key");
-        log("  Target PubKey - pub: [" + from_pub + "]");
+        log("  Target PubKey - from_pub: [" + from_pub + "]");
         log("  h_raw: " + h_raw);
         log("sigT: R_point[" + sigT.R_point + "]" + " | sigT.r = " + sigT.r + " | sigT.s = " + sigT.s);
         log("[<span class=\"b\">" + sigT.r +","+sigT.s + "</span>]");
