@@ -1,7 +1,7 @@
 <?php
 // --- Načtení posledního bloku pro potřeby JavaScriptu ---
 $last_block_query = $db->query("
-    SELECT id_block, timestamp, tx_root 
+    SELECT id_block, prev_hash, timestamp, tx_root, nonce 
     FROM blockchain 
     ORDER BY id_block DESC 
     LIMIT 1
@@ -11,14 +11,19 @@ $last_block = $last_block_query ? $last_block_query->fetchArray(SQLITE3_ASSOC) :
 
 // Pokud blok neexistuje, nastavíme prázdné hodnoty (např. pro Genesis)
 $lb_id    = $last_block ? $last_block['id_block'] : 0;
+$lb_prev  = $last_block ? $last_block['prev_hash'] : 0;
 $lb_ts    = $last_block ? $last_block['timestamp'] : 0;
 $lb_root  = $last_block ? $last_block['tx_root'] : '000000';
+$lb_nonce  = $last_block ? $last_block['nonce'] : '99999';
+
 ?>
 
 <div id="last-block-data" 
      data-id="<?= $lb_id ?>" 
+     data-prev="<?= $lb_prev ?>" 
      data-ts="<?= $lb_ts ?>" 
      data-root="<?= $lb_root ?>" 
+     data-nonce="<?= $lb_nonce ?>" 
      style="display:none;">
 </div>
 
@@ -26,7 +31,7 @@ $lb_root  = $last_block ? $last_block['tx_root'] : '000000';
     <strong>Last Block Info:</strong> 
     ID: <?= $lb_id ?> | 
     TS: <?= $lb_ts ?> | 
-    TX_ROOT: <span style="color: #0f0;"><?= $lb_root ?>
+    TX_ROOT: <span style="color: #0f0;"><?= $lb_root ?> | <?= $lb_nonce ?><br />
     :.:<?= $lb_id ?>|<?= $lb_ts ?>|<?= $lb_root ?>:.:
     </span>
 </div>
@@ -101,9 +106,11 @@ $('#mine-btn').click(function(){
     let tx_root = window.hex24(raw_tx);
 
     // 3. Výpočet prev_hash (ze starého bloku)
-    let prev_string = lb.id + "|" + lb.ts + "|" + lb.root;
+    let prev_string = lb.id + "|" + lb.prev + "|"+ lb.ts + "|" + lb.root + "|" + lb.nonce;
     let raw_prev    = window.ASH24(prev_string);
     let prev_hash   = window.hex24(raw_prev);
+
+    let nonce = Math.floor(Math.random() * (99999 - 100 + 1)) + 100;    
 
     // --- POST mining request ---
     $.post('index.php', { 
@@ -111,6 +118,7 @@ $('#mine-btn').click(function(){
         tx_ids: selected_txids, // Posíláme pole TXID
         tx_root: tx_root,
         prev_hash: prev_hash,
+        nonce: nonce,
         tx_text: tx_list_string // Přidáno pro uložení seznamu do tabulky blockchain
     }, function(response){
         try {

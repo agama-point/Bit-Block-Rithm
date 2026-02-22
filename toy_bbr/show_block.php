@@ -18,7 +18,7 @@ try {
 
     // 2. Load information about the PREVIOUS block (for "Prev. Block Info")
     $prev_id = $id_block - 1;
-    $stmt_prev = $db->prepare("SELECT id_block, timestamp, tx_root, nonce FROM blockchain WHERE id_block = :prev LIMIT 1");
+    $stmt_prev = $db->prepare("SELECT id_block, prev_hash, timestamp, tx_root, nonce FROM blockchain WHERE id_block = :prev LIMIT 1");
     $stmt_prev->bindValue(':prev', $prev_id, SQLITE3_INTEGER);
     $res_prev = $stmt_prev->execute();
     $prev_block = $res_prev->fetchArray(SQLITE3_ASSOC);
@@ -42,14 +42,13 @@ try {
         
         table { border-collapse: collapse; width: 100%; margin-top: 20px; background: #181818; }
         td { padding: 12px; border: 1px solid #333; }
-        td:first-child { width: 180px; font-weight: bold; color: #fff; background: #222; }
+        td:first-child { width: 200px; font-weight: bold; color: #fff; background: #222; }
         
         .last-block-info { 
             background: #002200; 
             border: 1px solid #0f0; 
             padding: 15px; 
-            margin-bottom: 20px; 
-            font-size: 0.9em;
+            margin-bottom: 20px;            
         }
         
         .hash-val { color: #0ff; word-break: break-all; }
@@ -65,12 +64,13 @@ try {
     <div class="last-block-info">
         <strong>Prev. Block Info (Parent):</strong><br>
         <?php if ($prev_block): ?>
-            ID: <a href="show_block.php?id=<?= $prev_block['id_block'] ?>" class="block-link"><?= $prev_block['id_block'] ?></a> | 
+            ID: <a href="show_block.php?id=<?= $prev_block['id_block'] ?>" class="block-link"><?= $prev_block['id_block'] ?></a> |
+            prev_hash: <span class="hash-val"><?= $prev_block['prev_hash'] ?></span> | 
             timestamp: <span class="number"><?= $prev_block['timestamp'] ?></span> | 
             TX_ROOT: <span class="hash-val"><?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?></span> |
-            nonce: <span class="number"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?><br />
+            nonce: <span class="number"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?></span><br />
 
-:.:<?= $prev_block['id_block'] ?>|<?= $prev_block['timestamp'] ?>|<?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?>|<?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?>:.:
+:.:<?= $prev_block['id_block'] ?>|<?= $prev_block['prev_hash'] ?>|<?= $prev_block['timestamp'] ?>|<?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?>|<?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?>:.:
 
 
 </span>
@@ -91,7 +91,7 @@ try {
             <td class="hash-val"><?= htmlspecialchars($block['prev_hash'] ?: '0000000000000000') ?></td>
         </tr>
         <tr>
-            <td>TX Root (Hash)</td>
+            <td>TX Root | Hash(.:.)</td>
             <td class="hash-val"><?= htmlspecialchars($block['tx_root']) ?></td>
         </tr>
         <tr class="number">
@@ -102,13 +102,13 @@ try {
             <td>Timestamp</td>
             <td class="number">
                 <?= $block['timestamp'] ?> 
-                <span style="color:#666; font-size:0.8em; margin-left:10px;">
+                <span style="color:#777; margin-left:10px;">
                     (<?= date("Y-m-d H:i:s", $block['timestamp']) ?>)
                 </span>
             </td>
         </tr>
         <tr>
-            <td>TX List (ID)</td>
+            <td>TX List (ID) .:.</td>
             <td class="tx-list"><?= htmlspecialchars($block['tx_txt']) ?></td>
         </tr>
         <tr>
