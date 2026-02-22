@@ -1,4 +1,4 @@
-# Bit·Block·Rithm  
+# Bit·Block·Rithm | (Algo·Rithm) 
 ### How Bitcoin Works: Bitcoin Math Playground
 
 **Bit·Block·Rithm** is a simplified, educational playground designed to make the mathematical principles behind Bitcoin understandable and approachable.  
