@@ -4,31 +4,17 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $mainDbFile = __DIR__ . "/main.db";   // adjust to your DB
 $txid = $_GET['txid'] ?? '';
 
-if ($txid === '') {
-    die("Missing txid.");
-}
+if ($txid === '') { die("Missing txid."); }
 
 try {
     $db = new SQLite3($mainDbFile);
-
-    $stmt = $db->prepare("
-        SELECT *
-        FROM transactions
-        WHERE txid = :txid
-        LIMIT 1
-    ");
+    $stmt = $db->prepare("SELECT * FROM transactions WHERE txid = :txid LIMIT 1");
 
     $stmt->bindValue(':txid', $txid, SQLITE3_INTEGER);
     $result = $stmt->execute();
     $row = $result->fetchArray(SQLITE3_ASSOC);
-
-    if (!$row) {
-        die("Transaction not found.");
-    }
-
-} catch (Exception $e) {
-    die("DB error: " . $e->getMessage());
-}
+    if (!$row) { die("Transaction not found."); }
+} catch (Exception $e) { die("DB error: " . $e->getMessage());}
 ?>
 
 <!DOCTYPE html>
@@ -40,68 +26,31 @@ try {
 <script src="js/jquery.min.js"></script>
 <script src='js/ash24.js'></script>
 <script src='js/ess251.js'></script>
-<style>
-body { font-family: monospace; background:#111; color:#0f0; padding: 20px; }
-table { border-collapse: collapse; }
-td { padding:6px 12px; border:1px solid #333; }
-td:first-child { font-weight:bold; color:#fff; }
-
-.explain { background:#181818; padding:15px; border:1px solid #333; margin-bottom:15px; }
-.ok { color:#0f0; }
-.bad { color:#f44; }
-.dim { color:#888; }
-
-</style>
 </head>
 <body>
 
-<h1>Transaction <?= htmlspecialchars($row['txid']) ?></h1>
-
-<table>
-<tr><td>id</td><td><?= $row['id'] ?></td></tr>
-<tr><td>txid</td><td><?= htmlspecialchars($row['txid']) ?></td></tr>
-<tr><td>sig</td><td><?= htmlspecialchars($row['sig']) ?></td></tr>
-<tr><td>from_addr</td><td><?= htmlspecialchars($row['from_addr']) ?></td></tr>
-<tr><td>to_addr</td><td><?= htmlspecialchars($row['to_addr']) ?></td></tr>
-<tr><td>val1</td><td><?= $row['val1'] ?></td></tr>
-<tr><td>val2</td><td><?= $row['val2'] ?></td></tr>
-<tr><td>mp</td><td><?= $row['mp'] ?></td></tr>
-<tr><td>utxo_time</td>
-    <td>
-        <?php
-        if ($row['utxo_time']) {
-            echo date("Y-m-d H:i:s", $row['utxo_time']);
-        } else {
-            echo "-";
-        }
-        ?>
-    </td>
-</tr>
-</table>
-
+<h1 class="digip">Transaction <?= htmlspecialchars($row['txid']) ?>  | sign & verify</h1>
 <hr>
-<hr>
+<br>
 <h2>Transaction Detailed Analysis and Validation</h2>
 
 <div class="explain">
 <?php
 echo "<h3>1) Basic Data Parsing</h3>";
-echo "<b>Internal ID (rowid):</b> {$row['id']}<br>";
-echo "<b>TXID:</b> {$row['txid']}<br>";
+echo "<b>Internal ID (rowid):</b> {$row['id']} | <b>TXID:</b> {$row['txid']}<br>";
 echo "<b>Type (mp):</b> {$row['mp']} ";
 
 if((int)$row['mp'] === 0){
     echo "<span class='dim'>(0 = coinbase)</span><br>";
 }else{
-    echo "<span class='dim'>(1 = regular transaction)</span><br>";
+    echo "<span class='dim'>(1 = mempool)</span><br>";
 }
 
-echo "<b>From:</b> ".htmlspecialchars($row['from_addr'])."<br>";
-echo "<b>To:</b> ".htmlspecialchars($row['to_addr'])."<br>";
+echo "<b>From:</b> ".htmlspecialchars($row['from_addr'])."<b>To:</b> ".htmlspecialchars($row['to_addr'])."<br>";
 echo "<b>Input value (val1):</b> {$row['val1']}<br>";
 echo "<b>Sent amount (val2):</b> {$row['val2']}<br>";
 echo "<b>Change:</b> ".((int)$row['val1']-(int)$row['val2'])."<br>";
-echo "<b>Timestamp:</b> ".date("Y-m-d H:i:s",(int)$row['utxo_time'])."<br>";
+echo "<b>Timestamp:</b> ".date("Y-m-d H:i:s", (int)$row['utxo_time'])." | sig: ".htmlspecialchars($row['sig'])."<br>";
 
 $from_adr = $row['from_addr'];
 $to_adr = $row['from_addr'];
@@ -138,14 +87,16 @@ if((int)$row['mp'] === 0){
 
 <?php
 if($row['sig']){
-    list($r,$s) = explode(",",$row['sig']);
-    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2'];    
+    list($r,$s) = explode(",",$row['sig']); // zatím jen jeden podpis r = rs
+    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2']; 
+
+include "tool_sign_ver.php";   
 ?>
 
 <div class="explain">
     <h3>3) Cryptographic Section</h3>
     <div id="cryptoDetail"></div>
-    <div style="margin-top: 20px; color: #888;">Debug Log:</div>
+    <div>Debug Log:</div>
     <pre id="log"></pre>
 </div>
 
@@ -159,7 +110,7 @@ if($row['sig']){
         log("======== SESSION ========");
         <?php
         $nick = $_SESSION['nick'] ?? null;
-        $k1 = $_SESSION['k1'] ?? 111;
+        $k1 = $_SESSION['k1'] ?? 1;
         $mdel = $_SESSION['minerdelay'] ?? null;
         
         echo "log('SESSION[nick]: ' + " . json_encode($nick) . ");\n";
@@ -176,12 +127,20 @@ if($row['sig']){
         log("  pub = scalar_mult(priv, G_POINT) -> " + pub);
         let pubKeyAddr = pubkey_to_addr(pub);
         log("  pubkey_to_addr(pub) ->" + pubKeyAddr);
-
+        log("");
         log("====== TX_DATABASE ======");
-        log("r=<?= $r ?> , s=<?= $s ?>");
-        log("[<span class=\"b\"><?= $r ?>,<?= $s ?></span>]");
-
+        //log("r=<?= $r ?> , s=<?= $s ?>");
+        ///*********************************zatím podepreno klackem r = sigN
+        sigN = hexa_to_point("<?= $r ?>");
+        log("sigN: " + "[<span class=\"b\">"+ sigN[0] + ","+ sigN[1] + "</span>]");
+        //log("[<span class=\"b\"><?= $r ?>,<?= $s ?></span>]");
+        //log("[<span class=\"b\">"+ sigN[0] + ","+ sigN[1] + "</span>]");
         //log("from_addr: <? $from_adr ?>");
+        //test_sig = sig_to_hexa(sigN[0],sigN[1]);  //pointX
+        test_sig = sig_to_hexa({  r: sigN[0],  s: sigN[1]}); //obj! 
+        log("[test inv.] " + test_sig);
+
+
         log("----- KEYS -----");
         log("From Address (DB): <?= htmlspecialchars($row['from_addr']) ?>");
         //let from_pub = hexa_to_point(<?= htmlspecialchars($row['from_addr']) ?>);
@@ -193,6 +152,7 @@ if($row['sig']){
         let to_pub = hexa_to_point("<?= htmlspecialchars($row['to_addr']) ?>");
         log("To Pub (reconstructed) hexa_to_point() -> [" + to_pub + "]");
         //log("hexa_to_point -> "+ from_pub);
+
         
         log("----- HASH -----");
         let msg = "<?= $msg ?>";
@@ -201,6 +161,7 @@ if($row['sig']){
 
         log("Message: <span class=\"b\">" + msg + "</span>");
         log("h_raw: " + h_raw + " | hash_hex: " + hash_hex);
+
 
         log("----- SIGN -----");
         log("Function: signToy(priv, h_raw)");
@@ -302,7 +263,9 @@ log(" ");
     });
 })();
 </script>
-<?php } ?>
+<?php }
+ 
+?>
 
 </body>
 </html>

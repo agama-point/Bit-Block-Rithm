@@ -1,12 +1,12 @@
 <?php
-session_start();
-$db = new SQLite3(__DIR__ . "/main.db");
-$nick = $_SESSION['nick'] ?? null;
+//session_start();
+//$db = new SQLite3(__DIR__ . "/main.db");
+//$nick = $_SESSION['nick'] ?? null;
 
-if(!$nick){
-    http_response_code(403);
-    exit("Not logged in");
-}
+//if(!$nick){
+//    http_response_code(403);
+//    exit("Not logged in");
+//}
 
 /* ===============================
    NEW FUNCTIONALITY – SAVE K1
@@ -41,6 +41,8 @@ $k3 = $res['k3'] ?? 0;
 $count = 0;
 foreach([$k1, $k2, $k3] as $k) if($k > 0) $count++;
 ?>
+
+<h1 class="digip">KEYS</h1>
 
 <div class="panel">
     <h3>Private key and the corresponding public key</h3>

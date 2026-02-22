@@ -1,3 +1,5 @@
+<h1 class="digip">TESTS & EXAMPLES</h1>
+
 <div id="p5-holder" style="border: 2px solid #333; display: inline-block; line-height: 0;"></div>    
 <script src="js/test_sq.js"></script>
 

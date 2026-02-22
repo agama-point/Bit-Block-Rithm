@@ -31,11 +31,12 @@ if (!in_array($page, $allowed_pages)) {
 <meta charset="utf-8">
 <title>Wallet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/bbr.css">
+<link rel="stylesheet" href="css/bbr25.css">
 <script src="js/jquery.min.js"></script>
 <script src="js/agama_bech32.js"></script>
 <script src="js/ash24.js"></script>
-<script src="js/ess251.js"></script> 
+<script src="js/ess251.js?v=0.21"></script>
+<script src="js/qrcode.js"></script> 
 <script src="js/p5.min.js"></script>
 
 </head>
@@ -43,7 +44,7 @@ if (!in_array($page, $allowed_pages)) {
 <body>
 
 <div class="header">
-  <div><b>B·B·R</b> | Bit·Block·Rithm | Don’t trust, verify — but first, understand. </div>
+  <div><b>B·B·R</b> | Bit·Block·Rithm (Algo·Rithm) | Don’t trust, verify — but first, understand. </div>
   <div>
     <?php if(isset($_SESSION['nick'])): ?>
       Logged in as <b><?= htmlspecialchars($_SESSION['nick']) ?></b> |
@@ -61,13 +62,13 @@ if(isset($_SESSION['nick'])):
 
 <!-- USER HORIZONTAL MENU -->
 <div class="user-menu" style="display:block !important; border: 1px solid green;">
-  <a href="index.php?page=home"> home</a> |&nbsp;
-  <a href="index.php?page=keys"> keys</a> |&nbsp;
-  <a href="index.php?page=wallet"> wallet</a> |&nbsp;
-  <a href="index.php?page=mining"> mining</a> |&nbsp;
-  <a href="index.php?page=blockchain"> blockchain</a> |&nbsp;
-  <a href="index.php?page=system"> system</a> |&nbsp; 
-  <a href="index.php?page=tests"> tests</a> 
+  &nbsp;<a href="index.php?page=home"> home</a> |&nbsp;
+  &nbsp;<a href="index.php?page=keys"> keys</a> |&nbsp;
+  &nbsp;<a href="index.php?page=wallet"> wallet</a> |&nbsp;
+  &nbsp;<a href="index.php?page=mining"> mining</a> |&nbsp;
+  &nbsp;<a href="index.php?page=blockchain"> blockchain</a> |&nbsp;
+  &nbsp;<a href="index.php?page=system"> system</a> |&nbsp; 
+  &nbsp;<a href="index.php?page=tests"> tests</a> 
 </div>
 <?php 
 endif; 

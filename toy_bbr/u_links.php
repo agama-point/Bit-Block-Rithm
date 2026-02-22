@@ -17,12 +17,14 @@ include "basic_info.php";
 
 <br />
 <h3>Tests & Examples</h3>
-<br />
-<a href="tests_examples/test_ash24.html">test_ash24</a> hash24<br/>
-<a href="tests_examples/demo_24mining.html">demo_24mining</a> ash24 fast mining<br/>
 <a href="tests_examples/multi_inv.html">multi_inv</a> * modular inverse 1–256<br/>
 <a href="tests_examples/simple_ecc.html">simple_ecc</a> * jumps for different mod<br/> 
-<a href="simple_ecc251.html">simple_ecc251.html</a> jumps on curve 251 (p5)<br/>
+<br />
+ECC251<br />
+<a href="tests_examples/simple_ecc251ec.html">tests_examples/simple_ecc251ec</a> jumps on curve 251 <br/>
+ASH24<br />
+<a href="tests_examples/test_ash24.html">test_ash24</a> hash24<br/>
+<a href="tests_examples/demo_24mining.html">demo_24mining</a> ash24 fast mining<br/>
 
 <br />
 <hr/>

@@ -1,6 +1,6 @@
 <h3>Blockchain | Last 16 blocks</h3>
 
-<table class="tx-table">
+<table class="tx-table blockchain-table">
     <thead>
         <tr>
             <th>ID</th>
@@ -20,59 +20,43 @@
         ?>
         <tr>
             <td>
-                <a href="show_block.php?id=<?= $row['id_block'] ?>" style="color:#fff; font-weight:bold;">
+                <a href="show_block.php?id=<?= $row['id_block'] ?>" class="block-id">
                     #<?= $row['id_block'] ?>
                 </a>
             </td>
 
-            <td style="color:#0f0">
-                <?= htmlspecialchars($row['prev_hash']) ?>
-            </td>
+            <td class="hash-prev"><?= htmlspecialchars($row['prev_hash']) ?></td>
+            <td class="hash-root"><?= htmlspecialchars($row['tx_root']) ?></td>
+            <td class="val"><?= $row['nonce'] ?></td>
+            <td><?= date('ymd | H:i', $row['timestamp']) ?></td>
 
-            <td style="color:#0ff">
-                <?= htmlspecialchars($row['tx_root']) ?>
-            </td>
-
-            <td class="val">
-                <?= $row['nonce'] ?>
-            </td>
-
-            <td>
-                <?= date('ymd | H:i', $row['timestamp']) ?>
-            </td>
-
-            <td style="font-size: 0.85em; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+            <td class="tx-text">
                 <?php 
                 $tx_raw = trim($row['tx_txt']);
                 if (!empty($tx_raw)) {
-                    // Rozdělíme text podle čárky
+
                     $tx_array = explode(',', $tx_raw);
                     $links = [];
 
                     foreach ($tx_array as $tx_id) {
-                        $tx_id = trim($tx_id); // Odstranění mezer
+                        $tx_id = trim($tx_id);
+
                         if (is_numeric($tx_id)) {
-                            // Vytvoření odkazu pro každé ID transakce
-                            $links[] = '<a href="show_tx.php?txid=' . urlencode($tx_id) . '" style="color:#0cf; text-decoration:none;">' . htmlspecialchars($tx_id) . '</a>';
+                            $links[] = '<a href="show_tx.php?txid=' . urlencode($tx_id) . '" class="tx-link">' . htmlspecialchars($tx_id) . '</a>';
                         } else {
                             $links[] = htmlspecialchars($tx_id);
                         }
                     }
-                    // Výpis odkazů oddělených čárkou a mezerou
+
                     echo implode(', ', $links);
                 } else {
-                    echo '<span style="color:#666;">empty</span>';
+                    echo '<span class="empty">empty</span>';
                 }
                 ?>
             </td>
 
-            <td>
-                <?= htmlspecialchars($row['note_block']) ?>
-            </td>
-
-            <td>
-                <?= htmlspecialchars($row['k']) ?>
-            </td>
+            <td><?= htmlspecialchars($row['note_block']) ?></td>
+            <td><?= htmlspecialchars($row['k']) ?></td>
         </tr>
         <?php endwhile; ?>
     </tbody>

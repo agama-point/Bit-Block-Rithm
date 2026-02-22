@@ -1,6 +1,4 @@
-b l o c k c h a i n <br />
-
-:.:
+<h1 class="digip">BLOCKCHAIN</h1>
 
 <?php 
 include "table_block.php"; 

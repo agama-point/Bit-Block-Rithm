@@ -6,15 +6,16 @@ $current_k1 = $_SESSION['k1'] ?? null;
 $nick = $_SESSION['nick'] ?? 'Guest';
 ?>
 
-<div class="utxo-container" style="margin-top: 20px;">
+<div class="utxo-container">
     <h3>Your Unspent Coins (UTXO)</h3>
-    <p>User: <b><?= htmlspecialchars($nick) ?></b> | 
-       My address: <span id="my-wallet-addr" style="color: #0f0; font-weight: bold;">deriving...</span>
+    <p>
+       User: <b><?= htmlspecialchars($nick) ?></b> | 
+       My address: <span id="my-wallet-addr" class="wallet-addr">deriving...</span>
     </p>
 
-    <table border="1" cellpadding="6" cellspacing="0" style="width: 100%; border-collapse: collapse; background: #000; color: #0f0; border-color: #444;">
+    <table class="tx-table utxo-table">
         <thead>
-            <tr style="background: #222;">
+            <tr>
                 <th>ID</th>
                 <th>TXID</th>
                 <th>Owner (Addr)</th>
@@ -24,34 +25,35 @@ $nick = $_SESSION['nick'] ?? 'Guest';
         </thead>
         <tbody id="utxo-table-body">
             <?php
-            // Load all UTXOs, JavaScript will filter by your address
             $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 20");
             $found_any = false;
 
             while($row = $res->fetchArray(SQLITE3_ASSOC)){
                 $found_any = true;
-                // Add data-owner attribute for easy JS filtering
-                $spent_label = $row['spent'] ? '<span style="color:red">SPENT</span>' : '<span style="color:#0f0">UNSPENT</span>';
-                $row_style = $row['spent'] ? 'opacity: 0.5;' : '';
-                
-                echo "<tr class='utxo-row' data-owner='{$row['owner']}' style='display:none; $row_style'>";
+
+                $spent_class = $row['spent'] ? 'spent-true' : 'spent-false';
+                $status_label = $row['spent'] ? 'SPENT' : 'UNSPENT';
+
+                echo "<tr class='utxo-row $spent_class' data-owner='{$row['owner']}' style='display:none;'>";
                 echo "<td>{$row['id']}</td>";
                 echo "<td>{$row['txid']}</td>";
                 echo "<td><code>{$row['owner']}</code></td>";
                 echo "<td><b>{$row['value']}</b></td>";
-                echo "<td>$spent_label</td>";
+                echo "<td class='status'>$status_label</td>";
                 echo "</tr>";
             }
 
             if (!$found_any) {
-                echo "<tr><td colspan='5' style='text-align:center'>The UTXO database is empty.</td></tr>";
+                echo "<tr><td colspan='5' class='empty-msg'>The UTXO database is empty.</td></tr>";
             }
             ?>
         </tbody>
     </table>
-    <p id="no-utxo-msg" style="display:none; color: #888;">No UTXOs were found for your address.</p>
-</div>
 
+    <p id="no-utxo-msg" class="empty-msg" style="display:none;">
+        No UTXOs were found for your address.
+    </p>
+</div>
 <script>
 $(function() {
     // 1. Derive address from k1 (same as in mining)

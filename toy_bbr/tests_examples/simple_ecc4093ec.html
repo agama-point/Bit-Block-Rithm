@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ECC Visualizer - Step by Step</title>
+  <link rel="stylesheet" type="text/css" href="../css/bbr.css">
+  <script src="../js/p5.min.js"></script>
+  <script src="../js/jquery.min.js"></script>
+  
+  <style>
+    body { background: #111; color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }
+    .layout { display: flex; gap: 20px; align-items: flex-start; }
+    #p5-container { border: 1px solid #333; background: #000; }
+    .controls { margin-top: 15px; padding: 15px; background: #222; border-radius: 8px; width: 800px; }
+    input[type=range] { width: 100%; cursor: pointer; }
+    #log { flex-grow: 1; height: 480px; background: #050505; color: #00ff41; font-family: 'Courier New', monospace; font-size: 11px; padding: 15px; border: 1px solid #444; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; }
+    b { color: #fff; }
+    .real { color: #00bcff; }
+    .section-title { color: #00aaff; font-weight: bold; border-bottom: 1px solid #00aaff33; display: block; margin-top: 10px; margin-bottom: 5px; }
+    .verified { color: #00ff41; font-weight: bold; }
+    .step-header { color: #ffcc00; font-size: 1.1em; border-bottom: 1px solid #333; display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<h1 class="digip">Arithmetic Geometry over Galois Fields</h1>
+<div id="log2">
+This laboratory explores the isomorphic relationship between elliptic curves in discrete and continuous spaces. By mapping scalar multiplications within a Galois Field <b>GF(251)</b> onto a real-number Weierstrass projection, the visualization reveals the underlying algebraic symmetry that governs modern cryptographic systems. Each step illustrates the transformation of discrete lattice points into their geometric counterparts through parity-based sign reconstruction.
+</div>
+
+  <div class="layout">
+
+
+
+    <div class="left-col">
+      <div id="p5-container"></div>
+      <div class="controls">
+        <div style="font-size: 1.2em; margin-bottom: 10px;">Scalar (k): <b id="k-val" style="color:#ffcc00">1</b></div>
+        <input type="range" id="kSlider" min="1" max="4093" value="1">
+        <div style="margin-top: 5px; font-size: 0.8em; color: #888;">Target Point: P = k · G</div>
+      </div>
+    </div>
+    <div id="log"></div>
+  </div>
+
+<script>
+/* --- CONSTANTS --- */
+const P = 4093; //251;
+const A = 0;
+const G = [1, 192];
+const B = 217; 
+
+function modN(n, m) { return ((n % m) + m) % m; }
+function inv_mod(x, mod_val) {
+    x = modN(x, mod_val);
+    for (let i = 1; i < mod_val; i++) { if ((x * i) % mod_val === 1) return i; }
+    return null;
+}
+function writeLog(txt) { $("#log").append(txt + "\n"); }
+
+function calculate_and_log(targetK) {
+  $("#log").empty();
+  writeLog(`<b>=== ECC EDUCATIONAL LOG: y² = x³ + ${B} (mod ${P}) ===</b>`);
+  
+  let current = [...G], pointsPath = [[...G]];
+  let lastS = 0;
+
+  for (let i = 2; i <= targetK; i++) {
+    let prev = [...current], num, den, s;
+    if (i === 2) {
+      // Point Doubling: s = (3x² + a) / 2y
+      num = modN(3 * prev[0] * prev[0] + A, P);
+      den = modN(2 * prev[1], P);
+    } else {
+      // Point Addition: s = (y2 - y1) / (x2 - x1)
+      num = modN(current[1] - G[1], P);
+      den = modN(current[0] - G[0], P);
+    }
+    let denInv = inv_mod(den, P);
+    if (denInv !== null) {
+      s = modN(num * denInv, P);
+      lastS = s;
+      let x3 = modN(s * s - (i === 2 ? 2 * prev[0] : current[0] + G[0]), P);
+      let y3 = modN(s * ((i === 2 ? prev[0] : current[0]) - x3) - (i === 2 ? prev[1] : current[1]), P);
+      current = [x3, y3]; pointsPath.push([...current]);
+    }
+  }
+
+  const final = pointsPath[pointsPath.length - 1];
+
+  // SECTION 1: DISCRETE WORLD
+  writeLog(`<span class="section-title">1. DISCRETE FIELD CALCULATIONS (F₂₅₁)</span>`);
+  writeLog(`Scalar k = ${targetK}. Operation: [${targetK}]G`);
+  writeLog(`Final Discrete Point K: <b>[${final[0]}, ${final[1]}]</b>`);
+  
+  if (targetK > 1) {
+    writeLog(`\nLast Step Arithmetic:`);
+    writeLog(`  Slope (s) calculation: s ≡ ${modN(final[1], P)} * inv(${modN(final[0], P)}) ≡ <b>${lastS}</b> (mod ${P})`);
+    writeLog(`  x₃ ≡ s² - x₁ - x₂ (mod P)`);
+    writeLog(`  y₃ ≡ s(x₁ - x₃) - y₁ (mod P)`);
+  }
+
+  let ySq = modN(final[1] * final[1], P);
+  let xSq = modN(final[0] * final[0], P);
+  let xCubed = modN(xSq * final[0], P);
+  let xSide = modN(xCubed + B, P);
+
+  writeLog(`\nVerification on Curve y² ≡ x³ + ${A}x + ${B} (mod ${P}):`);
+  writeLog(`  LHS: ${final[1]}² ≡ ${ySq} (mod ${P})`);
+  writeLog(`  RHS: ${final[0]}³ + ${B} ≡ ${xSide} (mod ${P})`);
+  writeLog(`  Status: <span class="verified">${ySq === xSide ? "VERIFIED ✓" : "FAILED ✗"}</span>`);
+
+  // SECTION 2: GEOMETRIC PROJECTION
+  writeLog(`<span class="section-title">2. GEOMETRIC PROJECTION (Continuous Mapping)</span>`);
+  
+  // X Mapping
+  let vX = map(final[0], 0, P, -2, 10);
+  writeLog(`Step A: Map Discrete X to Real Interval`);
+  writeLog(`  Formula: x_real = map(${final[0]}, 0, ${P}, -2, 10)`);
+  writeLog(`  Result: <b>x_real = ${vX.toFixed(4)}</b>`);
+
+  // Y Mapping
+  let yRealSq = Math.pow(vX, 3) + B;
+  let vY_abs = Math.sqrt(Math.abs(yRealSq));
+  writeLog(`\nStep B: Solve for Real Y on Curve y² = x³ + ${B}`);
+  writeLog(`  y = ±√((${vX.toFixed(4)})³ + ${B})`);
+  writeLog(`  y = ±√(${yRealSq.toFixed(4)}) ≈ ±<b>${vY_abs.toFixed(4)}</b>`);
+
+  // Parity Trick
+  let isEven = final[1] % 2 === 0;
+  let sign = isEven ? 1 : -1;
+  writeLog(`\nStep C: The Parity Branch Selection`);
+  writeLog(`  Discrete Y (${final[1]}) is ${isEven ? 'EVEN' : 'ODD'}.`);
+  writeLog(`  Rule: Even -> Positive Branch (+), Odd -> Negative Branch (-)`);
+  writeLog(`  Selected Sign: ${sign > 0 ? '+' : '-'}`);
+
+  writeLog(`\nFinal Mapped Coordinates:`);
+  writeLog(`  <b class="real">[${vX.toFixed(4)}, ${(vY_abs * sign).toFixed(4)}]</b>`);
+
+  $('#log').scrollTop(0); 
+  return pointsPath;
+}
+
+let slider, lastK = -1, currentPointsPath = [];
+function setup() {
+  let cnv = createCanvas(800, 400); cnv.parent('p5-container');
+  slider = select('#kSlider');
+}
+
+function draw() {
+  background(15);
+  let k = int(slider.value()); select('#k-val').html(k);
+  if (k !== lastK) { currentPointsPath = calculate_and_log(k); lastK = k; }
+  const m = 50, s = 300, rOff = 450;
+  
+  drawGrid(m, m, s, "Finite Field F(251)");
+  drawGrid(rOff, m, s, "Real Curve Projection (Mapped)", true);
+  
+  let cell = s / P;
+  stroke(0, 255, 0, 40); noFill(); beginShape();
+  for (let p of currentPointsPath) vertex(m + p[0] * cell, m + (P - p[1]) * cell);
+  endShape();
+  for (let i = 0; i < currentPointsPath.length; i++) {
+    let p = currentPointsPath[i]; let sx = m + p[0] * cell, sy = m + (P - p[1]) * cell;
+    if (i === currentPointsPath.length - 1) { fill(255, 0, 0); noStroke(); circle(sx, sy, 10); stroke(255, 0, 0, 100); noFill(); circle(sx, sy, 16); }
+    else { fill(0, 255, 0, 150); noStroke(); circle(sx, sy, 5); }
+  }
+  if (currentPointsPath.length > 0) drawRealCurve(rOff, m, s, currentPointsPath[currentPointsPath.length - 1]);
+}
+
+function drawGrid(x, y, s, label, isReal = false) {
+  stroke(60); strokeWeight(1); noFill(); 
+  rect(x, y, s, s);
+  if (isReal) {
+    const offsetX = 100; 
+    let cX = x + offsetX;
+    let cY = y + s / 2;
+    stroke(40);
+    line(x, cY, x + s, cY); // Axis X
+    line(cX, y, cX, y + s); // Axis Y
+  }
+  fill(150); noStroke(); textSize(14); 
+  text(label, x, y - 10); 
+}
+
+function drawRealCurve(offX, offY, s, currentPoint) {
+  const scaleX = 10; const scaleY = 4;
+  const offsetX = 100; 
+  let cX = offX + offsetX, cY = offY + s/2; 
+
+  stroke(40); line(offX, cY, offX+s, cY); 
+  
+  fill(100); textSize(10); noStroke();
+  text("-2", cX + (-2 * scaleX), cY + 15);
+  text("10", cX + (10 * scaleX), cY + 15);
+  text("±35", offX + 5, offY + 20);
+
+  stroke(0, 120, 255, 180); strokeWeight(2.5); noFill();
+  for (let side of [1, -1]) {
+    beginShape();
+    for (let x = -6; x < 20; x += 0.25) {
+      let y2 = Math.pow(x, 3) + B;
+      if (y2 >= 0) {
+          let px = cX + x * scaleX, py = cY - (Math.sqrt(y2) * side) * scaleY;
+          if (px >= offX && px <= offX + s && py >= offY && py <= offY + s) vertex(px, py);
+      }
+    }
+    endShape();
+  }
+
+  let vX = map(currentPoint[0], 0, P, -2, 10);
+  let vY = Math.sqrt(Math.abs(Math.pow(vX, 3) + B)) * (currentPoint[1] % 2 === 0 ? 1 : -1);
+  let pX = cX + vX * scaleX, pY = cY - vY * scaleY;
+  
+  if (pX >= offX && pX <= offX + s && pY >= offY && pY <= offY + s) {
+    fill(255, 0, 0); noStroke(); circle(pX, pY, 12);
+    stroke(255, 0, 0, 100); strokeWeight(1); line(pX, cY, pX, pY);
+  }
+}
+</script>
+</body>
+</html>

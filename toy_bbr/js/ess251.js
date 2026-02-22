@@ -1,7 +1,7 @@
 // ESS251: Elliptic Signature Scheme for p=251
 // Educational ECC toy library
 
-const ESS251_VER = "0.2 | 2026/01";
+const ESS251_VER = "0.21 | 2026/02";
 window.ESS251_VER = ESS251_VER;
 
 const P_MOD = 251;
@@ -108,6 +108,12 @@ function verifyToy(public_key_point, msg_hash, signature, debug = false) {
     }
 
     return L !== null && P !== null && L[0] === P[0] && L[1] === P[1];
+}
+
+function sig_to_hexa(signature){
+    let rHex = signature.r.toString(16).padStart(2,'0');
+    let sHex = signature.s.toString(16).padStart(2,'0');
+    return rHex + sHex;
 }
 
 // Pubkey hexa

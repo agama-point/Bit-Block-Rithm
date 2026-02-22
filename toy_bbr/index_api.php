@@ -73,7 +73,9 @@ if ($action === "mine_tx") {
     $tx_txt = $ids_list; // Seznam ID transakcí v bloku
 
     // Nonce pro budoucí Proof of Work (zatím náhodný)
-    $nonce = random_int(100, 99999);
+    //$nonce = random_int(100, 99999);
+    $nonce = $_POST['nonce'];
+
 
     // Vyčištění tx_root
     $tx_root = $_POST['tx_root'];
@@ -260,8 +262,9 @@ if ($action === "miningX" || $action === "coinbaseX") {
     $to = $_POST['to'];
     $val1 = intval($_POST['val1']); 
     $val2 = intval($_POST['val2']);
-    $r = $_POST['r']; 
-    $s = $_POST['s'];
+    //$r = $_POST['r']; 
+    //$s = $_POST['s'];
+    $sig = $_POST['sig_hex'];
     $utxo_id = intval($_POST['utxo_id']);
     $utxo_txid = intval($_POST['utxo_txid']); // <--- nově
 
@@ -271,7 +274,7 @@ if ($action === "miningX" || $action === "coinbaseX") {
     }
 
     $db->exec("INSERT INTO transactions (txid, prev_txid, sig, from_addr, to_addr, val1, val2, mp, utxo_time) 
-               VALUES (0, $utxo_txid, '$r,$s', '$from', '$to', $val1, $val2, 1, ".time().")");
+               VALUES (0, $utxo_txid, '$sig', '$from', '$to', $val1, $val2, 1, ".time().")");
     $lastId = $db->lastInsertRowID();
     $new_txid = $lastId + 1000;
     $db->exec("UPDATE transactions SET txid = $new_txid WHERE rowid = $lastId");
