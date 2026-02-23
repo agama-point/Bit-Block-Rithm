@@ -35,6 +35,8 @@ let priv = sessionData.k1;
 //log("Používám privátní klíč (k1): " + priv);
 log("=========================");
 log("ESS251_VER: " + ESS251_VER);
+log("ASH24_VER: " + ASH24_VER);
+log("p5.js: " + p5.prototype.VERSION);
 log("========================="); 
 
 let pub = scalar_mult(priv, G_POINT);

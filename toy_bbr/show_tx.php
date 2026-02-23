@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-$mainDbFile = __DIR__ . "/main.db";   // adjust to your DB
+$mainDbFile = __DIR__ . "/main.db";
 $txid = $_GET['txid'] ?? '';
 
 if ($txid === '') { die("Missing txid."); }
@@ -9,263 +9,259 @@ if ($txid === '') { die("Missing txid."); }
 try {
     $db = new SQLite3($mainDbFile);
     $stmt = $db->prepare("SELECT * FROM transactions WHERE txid = :txid LIMIT 1");
-
     $stmt->bindValue(':txid', $txid, SQLITE3_INTEGER);
     $result = $stmt->execute();
     $row = $result->fetchArray(SQLITE3_ASSOC);
     if (!$row) { die("Transaction not found."); }
-} catch (Exception $e) { die("DB error: " . $e->getMessage());}
+} catch (Exception $e) { die("DB error: " . $e->getMessage()); }
+
+$msg_payload = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2'];
+$sig_hex = $row['sig'] ?? '';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Transaction <?= htmlspecialchars($row['txid']) ?></title>
-<link rel="stylesheet" href="css/bbr.css">
-<script src="js/jquery.min.js"></script>
-<script src='js/ash24.js'></script>
-<script src='js/ess251.js'></script>
+    <meta charset="UTF-8">
+    <title>TX Analysis - Cryptographic Detail</title>
+    <link rel="stylesheet" href="css/bbr.css">
+    <script src="js/jquery.min.js"></script>
+    <script src='js/ash24.js'></script>
+    <script src='js/ess251.js'></script>
+    <style>
+        body { background-color: #0a0a0a; color: #eee; font-family: 'Courier New', monospace; padding: 20px; font-size: 1em; margin: 0; overflow: hidden; }
+        
+        
+        .container { display: flex; gap: 20px; height: calc(100vh - 100px); }
+        
+        /* Left panel now has its own scrollbar if content overflows */
+        .left-panel { flex: 0 0 580px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 5px; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; }
+
+        .data-box { background: #111; padding: 12px; border-radius: 4px; border: 1px solid #222; line-height: 1.4; margin-bottom: 10px; }
+        .val-hl { color: #00ccff; font-weight: bold; }
+        
+        .explain { background: #111; padding: 15px; border-radius: 5px; border: 1px solid #222; }
+        h3 { color: #00ff99; margin: 0 0 15px 0; font-size: 1em; text-transform: uppercase; }
+
+        .row { display: flex; align-items: center; margin-bottom: 8px; gap: 10px; }
+        .row label { width: 110px; color: #ccc; font-weight: bold; font-size: 1em; }
+        .row input { 
+            background: #1a1a1a; border: 1px solid #444; color: #00ff99; 
+            padding: 6px 10px; flex: 1; font-family: monospace; font-size: 1em; outline: none;
+        }
+        .row input:focus { border-color: #00ff99; }
+        .row .info { color: #aaa; font-size: 1em; min-width: 140px; }
+
+        #log { 
+            background: #000; color: #00ff41; padding: 15px; 
+            font-size: 1em; border-radius: 5px; border: 1px solid #333; 
+            white-space: pre-wrap; line-height: 1.4; flex-grow: 1; 
+            overflow-y: auto;
+        }
+        
+        .btn-action { 
+            background: #00ff99; color: #000; border: none; padding: 10px 20px; 
+            cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.9em; margin-top: 5px;
+        }
+        .btn-action:hover { background: #00cc7a; }
+        .btn-sign { background: #00ccff; }
+        .btn-clear { background: #333; color: #ccc; margin-left: 10px; }
+
+        .status-badge { font-weight: bold; padding: 4px 12px; margin-left: 10px; border-radius: 2px; }
+        .ok { border: 1px solid #00ff99; color: #00ff99; }
+        .bad { border: 1px solid #ff4136; color: #ff4136; }
+    </style>
 </head>
 <body>
 
-<h1 class="digip">Transaction <?= htmlspecialchars($row['txid']) ?>  | sign & verify</h1>
-<hr>
-<br>
-<h2>Transaction Detailed Analysis and Validation</h2>
+<h1 class="digip">TX Analysis | ID <?= htmlspecialchars($row['txid']) ?></h1>
 
-<div class="explain">
-<?php
-echo "<h3>1) Basic Data Parsing</h3>";
-echo "<b>Internal ID (rowid):</b> {$row['id']} | <b>TXID:</b> {$row['txid']}<br>";
-echo "<b>Type (mp):</b> {$row['mp']} ";
+<div class="container">
+    <div class="left-panel">
+        <div class="data-box">
+            TXID: <?= $row['txid'] ?> | Type: <?= (int)$row['mp'] === 0 ? "coinbase" : "mempool" ?><br>
+            From: <span class="val-hl"><?= htmlspecialchars($row['from_addr']) ?></span> | To: <span class="val-hl"><?= htmlspecialchars($row['to_addr']) ?></span><br>
+            In: <?= $row['val1'] ?> | Out: <?= $row['val2'] ?> | Change: <?= (int)$row['val1']-(int)$row['val2'] ?>
+        </div>
 
-if((int)$row['mp'] === 0){
-    echo "<span class='dim'>(0 = coinbase)</span><br>";
-}else{
-    echo "<span class='dim'>(1 = mempool)</span><br>";
-}
+        <div class="explain">
+            <h3>1) Verify Section</h3>
+            <div class="row">
+                <label>Message</label>
+                <input type="text" id="in_msg" value="<?= htmlspecialchars($msg_payload) ?>">
+                <div id="res_hash" class="info"></div>
+            </div>
+            <div class="row">
+                <label>PubKey</label>
+                <input type="text" id="in_addr" value="<?= htmlspecialchars($row['from_addr']) ?>">
+                <div id="res_point" class="info"></div>
+            </div>
+            <div class="row">
+                <label>Signature</label>
+                <input type="text" id="in_sig" value="<?= htmlspecialchars($sig_hex) ?>">
+                <div id="res_rs" class="info"></div>
+            </div>
+            <button class="btn-action" onclick="doVerify()">Verify Signature</button>
+            <span id="status_box"></span>
+        </div>
 
-echo "<b>From:</b> ".htmlspecialchars($row['from_addr'])."<b>To:</b> ".htmlspecialchars($row['to_addr'])."<br>";
-echo "<b>Input value (val1):</b> {$row['val1']}<br>";
-echo "<b>Sent amount (val2):</b> {$row['val2']}<br>";
-echo "<b>Change:</b> ".((int)$row['val1']-(int)$row['val2'])."<br>";
-echo "<b>Timestamp:</b> ".date("Y-m-d H:i:s", (int)$row['utxo_time'])." | sig: ".htmlspecialchars($row['sig'])."<br>";
+        <div class="explain">
+            <h3>2) Sign Section</h3>
+            <div class="row">
+                <label>PrivKey</label>
+                <input type="number" id="in_priv" value="123">
+                <div class="info">Deterministic signing</div>
+            </div>
+            <button class="btn-action btn-sign" onclick="doSign()">Sign Message</button>
+            <button class="btn-action btn-clear" onclick="$('#log').text('')">Clear Log</button>
+        </div>
 
-$from_adr = $row['from_addr'];
-$to_adr = $row['from_addr'];
-?>
-</div>
+        <div class="explain" style="margin-top: 10px; border-color: #333;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #00ccff; font-size: 0.9em;">CRYPTOGRAPHIC SPECIFICATION (ESS251)</h3>
+                <button id="btn_toggle_exp" class="btn-action" style="padding: 5px 15px; font-size: 0.7em; margin: 0;">SHOW DETAILS</button>
+            </div>
 
-<div class="explain">
-<?php
-echo "<h3>2) Structural Check</h3>";
-$struct_ok = true;
+            <div id="exp_content" style="display: none; margin-top: 15px; border-top: 1px solid #222; padding-top: 15px; color: #aaa; line-height: 1.6;">
+                <p>
+                    This system utilizes <strong>ESS251</strong>, an educational "toy" Elliptic Curve Signature Scheme operating over the finite field $GF(251)$. 
+                    Unlike standard ECDSA, this implementation is based on a simplified <strong>Schnorr-like signature</strong> logic.
+                </p>
+                
+                
 
-if((int)$row['mp'] === 0){
-    echo "Coinbase must have:<br>- from_addr = NULL<br>- val1 = 0<br><br>";
-    if($row['from_addr'] !== NULL){ echo "<span class='bad'>✗ from_addr is not NULL</span><br>"; $struct_ok = false; }
-    if((int)$row['val1'] !== 0){ echo "<span class='bad'>✗ val1 is not 0</span><br>"; $struct_ok = false; }
-    if($struct_ok){ echo "<span class='ok'>✓ Structurally valid coinbase</span>"; }
-}else{
-    echo "Regular transaction must satisfy:<br>- val2 ≤ val1<br>- existing input UTXO<br><br>";
-    if((int)$row['val2'] <= (int)$row['val1']){ echo "<span class='ok'>✓ val2 ≤ val1</span><br>"; } 
-    else { echo "<span class='bad'>✗ val2 > val1</span><br>"; $struct_ok = false; }
+                <p>
+                    <strong>Deterministic Nonce:</strong> The nonce $k$ is derived as 
+                    <code style="color: #00ff99;">k = (hash XOR 0x55) mod N</code>. 
+                    This ensures consistent signatures and allows for $R$-point reconstruction by the verifier without explicit coordinate transmission.
+                </p>
 
-    $stmt2 = $db->prepare("SELECT COUNT(*) as cnt FROM utxo WHERE owner = :owner AND value = :value");
-    $stmt2->bindValue(':owner',$row['from_addr'],SQLITE3_TEXT);
-    $stmt2->bindValue(':value',$row['val1'],SQLITE3_INTEGER);
-    $cnt = $stmt2->execute()->fetchArray(SQLITE3_ASSOC)['cnt'];
+                <p style="font-size: 0.9em; color: #777; border-left: 2px solid #00ccff; padding-left: 10px;">
+                    Curve Parameters:<br>
+                    Equation: $y^2 = x^3 + 7 \pmod{251}$<br>
+                    Generator $G$: $[1, 192]$ | Order $n$: $252$
+                </p>
+            </div>
+        </div>
+    </div>
 
-    if($cnt > 0){ echo "<span class='ok'>✓ Matching UTXO exists</span><br>"; }
-    else{ echo "<span class='bad'>✗ Input UTXO not found</span><br>"; $struct_ok = false; }
-
-    if($struct_ok){ echo "<br><span class='ok'>✓ Structurally valid</span>"; }
-}
-?>
-</div>
-
-<?php
-if($row['sig']){
-    list($r,$s) = explode(",",$row['sig']); // zatím jen jeden podpis r = rs
-    $msg = $row['from_addr']."|".$row['prev_txid']."|".$row['to_addr']."|".$row['val2']; 
-
-include "tool_sign_ver.php";   
-?>
-
-<div class="explain">
-    <h3>3) Cryptographic Section</h3>
-    <div id="cryptoDetail"></div>
-    <div>Debug Log:</div>
-    <pre id="log"></pre>
+    <div class="right-panel">
+        <div id="log"></div>
+    </div>
 </div>
 
 <script>
-(function(){
-    function log(txt){ $("#log").append(txt + "\n"); }
+function log(txt) { 
+    let logEl = document.getElementById("log");
+    logEl.innerText += txt + "\n"; 
+    logEl.scrollTop = logEl.scrollHeight; 
+}
 
-    $(document).ready(function(){
-        $("#log").text(""); // Clear log
+function parseSig(hex) {
+    if (hex.length < 4) return { r: 0, s: 0 };
+    return { r: parseInt(hex.substring(0, 2), 16), s: parseInt(hex.substring(2, 4), 16) };
+}
 
-        log("======== SESSION ========");
-        <?php
-        $nick = $_SESSION['nick'] ?? null;
-        $k1 = $_SESSION['k1'] ?? 1;
-        $mdel = $_SESSION['minerdelay'] ?? null;
-        
-        echo "log('SESSION[nick]: ' + " . json_encode($nick) . ");\n";
-        echo "log('SESSION[k1]: ' + " . json_encode($k1) . ");\n";
-        echo "log('SESSION[minerdelay]: ' + " . json_encode($mdel) . ");\n\n";
-        ?>
-        log("-------------------------\n");
-        let priv = <?= json_encode($k1) ?>;        
-        log("Function: scalar_mult(priv, G_POINT)");
-        log("Input:");
-        log("  priv [session_k1] = " + priv);
-        log("  G_POINT = [" + G_POINT + "]");
-        let pub = scalar_mult(priv, G_POINT);
-        log("  pub = scalar_mult(priv, G_POINT) -> " + pub);
-        let pubKeyAddr = pubkey_to_addr(pub);
-        log("  pubkey_to_addr(pub) ->" + pubKeyAddr);
-        log("");
-        log("====== TX_DATABASE ======");
-        //log("r=<?= $r ?> , s=<?= $s ?>");
-        ///*********************************zatím podepreno klackem r = sigN
-        sigN = hexa_to_point("<?= $r ?>");
-        log("sigN: " + "[<span class=\"b\">"+ sigN[0] + ","+ sigN[1] + "</span>]");
-        //log("[<span class=\"b\"><?= $r ?>,<?= $s ?></span>]");
-        //log("[<span class=\"b\">"+ sigN[0] + ","+ sigN[1] + "</span>]");
-        //log("from_addr: <? $from_adr ?>");
-        //test_sig = sig_to_hexa(sigN[0],sigN[1]);  //pointX
-        test_sig = sig_to_hexa({  r: sigN[0],  s: sigN[1]}); //obj! 
-        log("[test inv.] " + test_sig);
+function updateVisuals() {
+    let msg = $("#in_msg").val();
+    let h_raw = ASH24(msg);
+    $("#res_hash").text(hex24(h_raw) + " (" + h_raw + ")");
+    try {
+        $("#res_point").text("[" + hexa_to_point($("#in_addr").val()) + "]");
+    } catch(e) { $("#res_point").text("[err]"); }
+    let sObj = parseSig($("#in_sig").val());
+    $("#res_rs").text("[" + sObj.r + "," + sObj.s + "]");
+}
 
+function doVerify() {
+    $("#status_box").html("");
+    let msg = $("#in_msg").val();
+    let addr = $("#in_addr").val();
+    let sigHex = $("#in_sig").val();
 
-        log("----- KEYS -----");
-        log("From Address (DB): <?= htmlspecialchars($row['from_addr']) ?>");
-        //let from_pub = hexa_to_point(<?= htmlspecialchars($row['from_addr']) ?>);
-        let from_pub = hexa_to_point("<?= htmlspecialchars($row['from_addr']) ?>");
-        log("From Pub (reconstructed) hexa_to_point() -> [" + from_pub + "]");
-        //log("hexa_to_point -> "+ from_pub);
-
-        log("To Address (DB): <?= htmlspecialchars($row['to_addr']) ?>");
-        let to_pub = hexa_to_point("<?= htmlspecialchars($row['to_addr']) ?>");
-        log("To Pub (reconstructed) hexa_to_point() -> [" + to_pub + "]");
-        //log("hexa_to_point -> "+ from_pub);
-
-        
-        log("----- HASH -----");
-        let msg = "<?= $msg ?>";
+    try {
         let h_raw = ASH24(msg);
-        let hash_hex  = hex24(h_raw);
+        let pubPoint = hexa_to_point(addr);
+        let sParts = parseSig(sigHex);
 
-        log("Message: <span class=\"b\">" + msg + "</span>");
-        log("h_raw: " + h_raw + " | hash_hex: " + hash_hex);
+        let k_nonce = modN(h_raw ^ 0x55, ORDER_N);
+        if (k_nonce === 0) k_nonce = 1;
+        let R_point = scalar_mult(k_nonce, G_POINT);
+        let sigObj = { r: sParts.r, s: sParts.s, R_point: R_point };
 
-
-        log("----- SIGN -----");
-        log("Function: signToy(priv, h_raw)");
-        log("Input: " + "  priv = " + priv + " | h_raw = " + h_raw);   
-
-        let sigT = signToy(priv, h_raw);
-
-        log("Output: R_point[" + sigT.R_point + "]" + " | sigT.r = " + sigT.r + " | sigT.s = " + sigT.s);
-
-        let L = scalar_mult(sigT.s, G_POINT);
-        LB = "<span class=\"b\">" + L + "</span>";
-        log("  Lp = scalar_mult(s, G) = [" + LB + "]");
-
-        let e_Pub = scalar_mult(h_raw % ORDER_N, pub);
-        log("  e*Pub = scalar_mult(h mod n, Pub) = [" + e_Pub + "]");
-
-        let P = point_adding(sigT.R_point, e_Pub);
-        PB = "<span class=\"b\">" + P + "</span>";
-
-        log("  Rp = R + e*Pub = [" + PB + "]");
-
-        log("----- VERIFY -----");
+        log("----- VERIFICATION PROCESS -----");
+        log("Message: " + msg);
+        log("h_raw: " + h_raw);
+        log("PubKey: [" + pubPoint + "]");
+        log("Signature (r,s): {" + sigObj.r + ", " + sigObj.s + "}");
+        log("Reconstructed R_point: [" + sigObj.R_point + "]");
+        log("");
         log("Function: verifyToy(pub, h_raw, sig)");
-        log("Input:" + "  pub = [" + pub + "]" + " | h_raw = " + h_raw + " | sig = { r:" + sigT.r + ", s:" + sigT.s + " }");
 
-        let valid = verifyToy(pub, h_raw, sigT);
+        let valid = verifyToy(pubPoint, h_raw, sigObj);
 
-        log("Output:" + "  valid = " + valid);
+        let e = modN(h_raw, ORDER_N);
+        let L = scalar_mult(sigObj.s, G_POINT).map(v => modN(v, P_MOD));
+        let e_Pub = scalar_mult(e, pubPoint).map(v => modN(v, P_MOD));
+        let P = point_adding(sigObj.R_point, e_Pub).map(v => modN(v, P_MOD));
 
-        if(valid){
-            log("\n  => L == P  →  Signature is VALID ✅");
+        log("Step 1: Challenge e = hash mod n = " + e);
+        log("Step 2: L = s * G = [" + L + "]");
+        log("Step 3: P = R + e * PubKey = [" + P + "]");
+        log("Output: valid = " + valid);
+
+        if (valid) {
+            log("  => L == P  →  Signature is VALID ✅");
+            $("#status_box").html('<span class="status-badge ok">VALID ✅</span>');
         } else {
-            log("\n  => L != P  →  Signature is INVALID ❌");
-        }      
-
-        log(" ");
-        log("============sig2=========\n");
-        let sig2 = { 
-          r: parseInt('<?= $r ?>'), 
-          s: parseInt('<?= $s ?>'),
-          R_point: scalar_mult(parseInt('<?= $r ?>'), G_POINT) 
-        };
-        
-        log("Public key: [" + pub + "]");
-
-        let hash = hash_hex;
-        let ok = verifyToy(pub, h_raw, sig2);
-        log("verifyToy(pub, h_raw, sig2)");
-        log("verifyToy sig2 result test: " + ok);
-
-
-log(" ");
-        log("============ CRYPTO TESTS 2 =========\n");
-
-        // TEST 1: VALID (Using the correct public key)
-        log("TEST 1: Verification with correct Public Key");
-        log("  Target PubKey - from_pub: [" + from_pub + "]");
-        log("  h_raw: " + h_raw);
-        log("sigT: R_point[" + sigT.R_point + "]" + " | sigT.r = " + sigT.r + " | sigT.s = " + sigT.s);
-        log("[<span class=\"b\">" + sigT.r +","+sigT.s + "</span>]");
-
-        let test1_res = verifyToy(from_pub, h_raw, sigT);
-        log("verifyToy(from_pub, h_raw, sigT)"); 
-        log("  Result: " + (test1_res ? "✅ VALID" : "❌ INVALID"));
-
-        log(" ");
-
-        // TEST 2: INVALID (Using a random public key)
-        let random_priv = 777; 
-        let random_pub = scalar_mult(random_priv, G_POINT);
-        log("TEST 2: Verification with random Public Key");
-        log("  Random PubKey: [" + random_pub + "]");
-        let test2_res = verifyToy(random_pub, h_raw, sigT);
-        log("  Result: " + (test2_res ? "✅ VALID" : "❌ INVALID"));
-
-        log("\n========================================");
-
-
-
-
-        let html = '';
-        html += '<br><b>ASH24 hash:</b> ' + hash + '<br>';
-        html += '<b>Public key from address:</b> (' + pub[0] + ',' + pub[1] + ')<br>';
-
-        html += '<br><b>Verification principle:</b><br>';
-        html += '1) Compute w = s⁻¹ mod n<br>';
-        html += '2) u1 = hash * w mod n<br>';
-        html += '3) u2 = r * w mod n<br>';
-        html += '4) Point R = u1·G + u2·Pub<br>';
-        html += '5) Valid if R.x mod n = r<br><br>';
-
-        if(ok){
-            html += '<span class="ok">✓ Signature is cryptographically VALID</span>';
-        }else{
-            html += '<span class="bad">✗ Signature is INVALID</span>';
+            log("  => L != P  →  Signature is INVALID ❌");
+            $("#status_box").html('<span class="status-badge bad">INVALID ❌</span>');
         }
+        log("---------------------------------\n");
+    } catch(e) { log("!! Error: " + e.message); }
+}
 
-        document.getElementById('cryptoDetail').innerHTML = html;
+function doSign() {
+    let msg = $("#in_msg").val();
+    let priv = parseInt($("#in_priv").val(), 10);
+    if (isNaN(priv)) { log("ERROR: Invalid Private Key."); return; }
+
+    let h_raw = ASH24(msg);
+    log("----- SIGNING PROCESS -----");
+    log("Message: " + msg + " | Hash: " + h_raw);
+    
+    let sigObj = signToy(priv, h_raw);
+    let sigHex = sig_to_hexa(sigObj);
+    let newPubPoint = scalar_mult(priv, G_POINT);
+    let newPubHex = pubkey_to_addr(newPubPoint);
+    
+    log("Result: r = " + sigObj.r + ", s = " + sigObj.s);
+    log("Hex Signature: " + sigHex);
+    log("Derived PubKey Hex: " + newPubHex);
+    log("---------------------------------\n");
+
+    $("#in_sig").val(sigHex);
+    $("#in_addr").val(newPubHex);
+    updateVisuals();
+}
+
+$(document).ready(function() {
+    updateVisuals();
+    $("#in_msg, #in_addr, #in_sig").on('input', updateVisuals);
+
+    $("#btn_toggle_exp").click(function() {
+        const content = $("#exp_content");
+        if (content.is(":visible")) {
+            content.slideUp();
+            $(this).text("SHOW DETAILS");
+        } else {
+            content.slideDown();
+            $(this).text("HIDE DETAILS");
+        }
     });
-})();
+});
 </script>
-<?php }
- 
-?>
 
 </body>
 </html>

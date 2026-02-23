@@ -18,7 +18,7 @@ $current_k1 = $_SESSION['k1'] ?? null;
 
   <button type="button" class="addr-btn" data-addr="83c1">A:83c1</button>
   <button type="button" class="addr-btn" data-addr="e875">B:e875</button>
-  <button type="button" class="addr-btn" data-addr="01C0">C:01c0</button>
+  <button type="button" class="addr-btn" data-addr="01c0">C:01c0</button>
 
   <div id="addrError" style="color: #ff4444; font-size: 12px; margin-top: 5px; display: none;">
     Invalid format! Use lowercase hex (0-9, a-f) only.

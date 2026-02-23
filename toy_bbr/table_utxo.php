@@ -25,7 +25,7 @@ $nick = $_SESSION['nick'] ?? 'Guest';
         </thead>
         <tbody id="utxo-table-body">
             <?php
-            $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 20");
+            $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 30");
             $found_any = false;
 
             while($row = $res->fetchArray(SQLITE3_ASSOC)){
