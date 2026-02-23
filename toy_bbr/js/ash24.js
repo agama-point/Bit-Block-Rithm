@@ -2,6 +2,9 @@
 // mini Merkle–Damgård
 // ASH24 = Agama simple hash 24 bit
 
+const ASH24_VER = "0.17 | 2026/01";
+
+
 (function () {
 
     function bytesToBin24(b) {
@@ -79,7 +82,9 @@
     }
 
     function hex24(v) {
-        return "0x" + (v & 0xFFFFFF).toString(16).padStart(6, "0");
+        //return "0x" + (v & 0xFFFFFF).toString(16).padStart(6, "0");
+        //return (v & 0xFFFFFF).toString(16).padStart(6, "0");
+        return (v & 0xFFFFFF).toString(16).padStart(6, "0"); 
     }
 
     function bin24(v) {
@@ -90,5 +95,6 @@
     window.hex24 = hex24;
     window.bin24 = bin24;
     window.bytesToBin24 = bytesToBin24;
+    window.ASH24_VER = ASH24_VER;
 
 })();
