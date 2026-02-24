@@ -1,11 +1,8 @@
 // js/ash32.js
 // ASH32 = Agama simple hash 32 bit
-
 const ASH32_VER = "0.1 | 2026/02";
 
-
 (function () {
-
     // Pomocná funkce pro rotaci vlevo u 8-bitového čísla
     function rol8(x, r) {
         return ((x << r) | (x >>> (8 - r))) & 0xFF;
@@ -63,12 +60,12 @@ const ASH32_VER = "0.1 | 2026/02";
             C ^= m2;
             D ^= m3;
 
-            // Transformační kroky (zatím necháváme 16 průchodů)
+            // Transformační kroky (zatím necháváme 16/25 průchodů)
             for (let j = 0; j < 16; j++) {
                 // Nelineární mixování a rotace
                 A = (A + IV[j % IV.length]) & 0xFF;
                 B ^= rol8(D, 3);
-                C ^= rol8(A, 2);
+                C ^= rol8(A, 2); 
                 D = (D + B) & 0xFF;
 
                 // Lavinový efekt - vzájemné ovlivnění
@@ -76,6 +73,11 @@ const ASH32_VER = "0.1 | 2026/02";
                 B ^= C;
                 C ^= D;
                 D ^= A;
+
+                //A ^= C;
+                //B ^= D;
+                //C ^= B;
+                //D ^= A;
 
                 // Permutace registrů (posun)
                 [A, B, C, D] = [B, C, D, A];

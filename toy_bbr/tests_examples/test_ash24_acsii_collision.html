@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ASH24 - Collision Test</title>
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/ash24.js"></script>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+        h2 { color: #00ff88; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        #controls { margin-bottom: 20px; background: #1e1e1e; padding: 15px; border-radius: 5px; }
+        input, button { 
+            background: #333; color: #fff; border: 1px solid #555; 
+            padding: 5px 10px; border-radius: 3px; cursor: pointer; 
+        }
+        button:hover { background: #444; border-color: #00ff88; }
+        button:disabled { opacity: 0.5; cursor: wait; }
+
+        #log {
+            background-color: #000;
+            color: #00ff00; 
+            border: 1px solid #333;
+            height: 600px;
+            overflow-y: scroll;
+            padding: 10px;
+            font-size: 1em;
+            line-height: 1;
+            white-space: pre-wrap;
+        }
+
+        /* Highlight Overrides */
+        .meta { color: #569cd6; }      /* Blue for info */
+        .collision { color: #0f0; } 
+        .summary { color: #4ec9b0; font-weight: bold; } /* Teal/Cyan for summary */
+        hr { border: 0; border-top: 1px solid #333; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h2>Agama Simple Hash 24-bit Collision Tester</h2>
+
+    <div id="controls">
+        Bit range (max_bits): 
+        <input type="number" id="bitsStart" value="13" min="1" max="25"> to 
+        <input type="number" id="bitsEnd" value="17" min="1" max="26">
+        <button id="runBtn">Run Test</button>
+    </div>
+
+    <div id="log">Waiting for input...</div>
+
+<script>
+$(document).ready(function() {
+    const $log = $('#log');
+    const $btn = $('#runBtn');
+
+    // Helper for logging
+    function printLog(text, className = "") {
+        const span = $('<span>').addClass(className).text(text + "\n");
+        $log.append(span);
+        // Auto-scroll to bottom
+        $log.scrollTop($log[0].scrollHeight);
+    }
+
+    // Convert integer to byte array (big-endian)
+    function intToBytes(n) {
+        if (n === 0) return [0];
+        let bytes = [];
+        let temp = n;
+        while (temp > 0) {
+            bytes.unshift(temp & 0xFF);
+            temp = Math.floor(temp / 256);
+        }
+        return bytes;
+    }
+
+    async function findCollisions(maxBits, findAll = true) {
+        let seen = new Map(); // hash -> list of inputs
+        let collisionsFound = 0;
+        let limit = Math.pow(2, maxBits);
+
+        printLog(`\n--- max_bits = ${maxBits} (${limit} iterations)`, "meta");
+
+        for (let i = 0; i < limit; i++) {
+            let data = intToBytes(i);
+            let h = window.ASH24(data);
+
+            if (seen.has(h)) {
+                let matches = seen.get(h);
+                for (let j of matches) {
+                    let hexHash = window.hex24(h);
+                    
+                    // Convert both numbers to their actual string/char representations
+                    let str1 = String.fromCharCode(...intToBytes(j));
+                    let str2 = String.fromCharCode(...intToBytes(i));
+                    
+                    // Output: string1 | string2 -> hash
+                    printLog(`${str1} | ${str2} -> ${hexHash}`, "collision");
+                    collisionsFound++;
+                }
+                matches.push(i);
+
+                if (!findAll) {
+                    printLog("Stopping after first collision.");
+                    return;
+                }
+            } else {
+                seen.set(h, [i]);
+            }
+
+            // Yield execution every 2000 iterations to keep UI responsive
+            if (i % 2000 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+        }
+
+        if (findAll) {
+            printLog(`Collisions found: ${collisionsFound}`, "summary");
+        }
+    }
+
+    $btn.click(async function() {
+        $btn.prop('disabled', true);
+        $log.empty();
+        printLog("------------------------------", "meta");
+        printLog("Starting collision test...", "meta");
+
+        let start = parseInt($('#bitsStart').val());
+        let end = parseInt($('#bitsEnd').val());
+
+        for (let k = start; k <= end; k++) {
+            await findCollisions(k, true);
+        }
+
+        printLog("\n[Test Completed]", "meta");
+        $btn.prop('disabled', false);
+    });
+});
+</script>
+</body>
+</html>

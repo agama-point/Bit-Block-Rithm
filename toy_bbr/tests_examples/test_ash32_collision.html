@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>ASH32 - Collision Finder</title>
+    <link rel="stylesheet" type="text/css" href="../css/bbr.css">
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/ash32.js"></script> 
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+        #controls { margin-bottom: 20px; background: #1e1e1e; padding: 15px; border-radius: 5px; }
+        input, button { background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #444; border-color: #00ff88; }
+        button:disabled { color: #666; border-color: #333; cursor: wait; }
+        #log {
+            background-color: #000; color: #00ff00; border: 1px solid #333;
+            height: 600px; overflow-y: scroll; padding: 10px;
+            font-size: 1em; line-height: 1.1; white-space: pre-wrap;
+        }
+        .collision { color: #0f0; }
+        .meta { color: #569cd6; }
+        .progress { color: #888; font-size: 0.8em; }
+        .radio-group { margin-bottom: 15px; display: block; }
+        .radio-group label { margin-right: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1 class="digip">ASH32 String Collision Finder</h1>
+    <h2>[Agama Simple Hash 32 bit]</h2>
+    <div class="collision">
+    | B10_6->96/1M | B16_5->90/1M1 | 
+    </div>
+
+    <div id="controls">
+        <div class="radio-group">
+            Charset: 
+            <label><input type="radio" name="charsetSel" value="0123456789"> Base 10 (0-9)</label>
+            <label><input type="radio" name="charsetSel" value="0123456789abcdef" checked> Base 16 (Hex)</label>
+            <label><input type="radio" name="charsetSel" value="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"> Base 64 (Alfanum)</label>
+        </div>
+        String Length: <input type="number" id="strLen" value="5" min="2" max="8">
+        <button id="runBtn">Start Brute Force</button>
+    </div>
+
+    <div id="log">Ready for 32-bit search...</div>
+
+<script>
+$(document).ready(function() {
+    const $log = $('#log');
+    const $btn = $('#runBtn');
+    
+    // Globální proměnná pro vybraný charset
+    let charset = "";
+
+    function printLog(text, className = "") {
+        const date = new Date().toLocaleTimeString();
+        const span = $('<span>').addClass(className).text(`[${date}] ${text}\n`);
+        $log.append(span);
+        $log.scrollTop($log[0].scrollHeight);
+    }
+
+    async function findStringCollisions(len) {
+        let seen = new Map();
+        let count = 0;
+        let collisionsFound = 0;
+        const total = Math.pow(charset.length, len);
+
+        printLog(`--- Starting ASH32 search (Length: ${len})`, "meta");
+        printLog(`--- Charset: [${charset}]`, "meta");
+        printLog(`--- Total combinations: ${total.toLocaleString()}`, "meta");
+
+        async function backtrack(currentStr) {
+            if (currentStr.length === len) {
+                count++;
+                
+                let h = window.ASH32(currentStr);
+                
+                if (seen.has(h)) {
+                    let match = seen.get(h);
+                    let hexHash = window.hex32(h);
+                    printLog(`COLLISION: "${match}" == "${currentStr}" (Hash: 0x${hexHash})`, "collision");
+                    collisionsFound++;
+                } else {
+                    seen.set(h, currentStr);
+                }
+
+                if (count % 10000 === 0) {
+                    if (count % 100000 === 0) {
+                        printLog(`... processed ${count.toLocaleString()} strings`, "progress");
+                    }
+                    await new Promise(r => setTimeout(r, 0));
+                }
+                return;
+            }
+
+            for (let i = 0; i < charset.length; i++) {
+                await backtrack(currentStr + charset[i]);
+            }
+        }
+
+        const startTime = performance.now();
+        await backtrack("");
+        const endTime = performance.now();
+        
+        printLog(`--- Search finished in ${((endTime - startTime)/1000).toFixed(2)}s.`, "meta");
+        printLog(`--- Total collisions: ${collisionsFound}`, "meta");
+    }
+
+    $btn.click(async function() {
+        // Načtení charsetu z vybraného radiobuttonu před startem
+        charset = $('input[name="charsetSel"]:checked').val();
+        
+        $btn.prop('disabled', true);
+        $log.empty();
+        let len = parseInt($('#strLen').val());
+        await findStringCollisions(len);
+        $btn.prop('disabled', false);
+    });
+});
+</script>
+</body>
+</html>

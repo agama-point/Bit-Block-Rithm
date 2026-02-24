@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ASH24 - String Collision Finder</title>
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/ash24.js"></script>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+        h2 { color: #00ff88; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        #controls { margin-bottom: 20px; background: #1e1e1e; padding: 15px; border-radius: 5px; }
+        input, button { background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #444; border-color: #00ff88; }
+        #log {
+            background-color: #000; color: #00ff00; border: 1px solid #333;
+            height: 600px; overflow-y: scroll; padding: 10px;
+            font-size: 1em; line-height: 1.2; white-space: pre-wrap;
+        }
+        .collision { color: #0f0; }
+        .meta { color: #569cd6; }
+    </style>
+</head>
+<body>
+
+    <h2>ASH24 String Collision Finder</h2>
+
+    <div id="controls">
+        String Length: <input type="number" id="strLen" value="3" min="1" max="6">
+        <button id="runBtn">Start Brute Force</button>
+    </div>
+
+    <div id="log">Ready...</div>
+
+<script>
+$(document).ready(function() {
+    const $log = $('#log');
+    const $btn = $('#runBtn');
+    
+    // Definice znakové sady (Base64-like + operátory)
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/=%";
+
+    function printLog(text, className = "") {
+        $log.append($('<span>').addClass(className).text(text + "\n"));
+        $log.scrollTop($log[0].scrollHeight);
+    }
+
+    async function findStringCollisions(len) {
+        let seen = new Map();
+        let count = 0;
+        let collisionsFound = 0;
+        const total = Math.pow(charset.length, len);
+
+        printLog(`--- Starting search for length: ${len} (${total.toLocaleString()} combinations)`, "meta");
+        printLog(`--- Charset: ${charset}`, "meta");
+
+        // Rekurzivní generátor kombinací, aby se nezahltila paměť
+        async function backtrack(currentStr) {
+            if (currentStr.length === len) {
+                count++;
+                
+                // Použijeme ASH24 přímo na string (tvoje knihovna to podporuje)
+                let h = window.ASH24(currentStr);
+                
+                if (seen.has(h)) {
+                    let match = seen.get(h);
+                    let hexHash = window.hex24(h);
+                    printLog(`${match} | ${currentStr} | ${hexHash}`, "collision");
+                    collisionsFound++;
+                } else {
+                    seen.set(h, currentStr);
+                }
+
+                // Každých 5000 iterací uvolníme vlákno
+                if (count % 5000 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
+                return;
+            }
+
+            for (let i = 0; i < charset.length; i++) {
+                await backtrack(currentStr + charset[i]);
+            }
+        }
+
+        await backtrack("");
+        printLog(`--- Search finished. Total collisions: ${collisionsFound}`, "meta");
+    }
+
+    $btn.click(async function() {
+        $btn.prop('disabled', true);
+        $log.empty();
+        let len = parseInt($('#strLen').val());
+        await findStringCollisions(len);
+        $btn.prop('disabled', false);
+    });
+});
+</script>
+</body>
+</html>

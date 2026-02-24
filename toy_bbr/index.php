@@ -2,12 +2,6 @@
 session_start();
 include "index_api.php"; // ajax
 
-//$nick = $_SESSION['nick'] ?? null;
-//$nick = $_SESSION['k1'] ?? null;
-//$nick = $_SESSION['mode'] ?? null;
-//$nick = $_SESSION['net'] ?? null;
-//$nick = $_SESSION['minerdelay'] ?? null;
-
 
 // LOGOUT
 if (isset($_GET['logout'])) {
@@ -34,7 +28,8 @@ if (!in_array($page, $allowed_pages)) {
 <link rel="stylesheet" href="css/bbr25.css">
 <script src="js/jquery.min.js"></script>
 <script src="js/agama_bech32.js"></script>
-<script src="js/ash24.js"></script>
+<script src="js/ash24.js?v=0.11"></script>
+<script src="js/ash32.js?v=0.10"></script>
 <script src="js/ess251.js?v=0.21"></script>
 <script src="js/qrcode.js"></script> 
 <script src="js/p5.min.js"></script>

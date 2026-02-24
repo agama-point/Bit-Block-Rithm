@@ -13,6 +13,9 @@ include "basic_info.php";
 <a href="https://www.agamapoint.com/bitcoin/">agamapoint.com/bitcoin</a><br/>
 <a href="https://www.agamapoint.com/matematika_bitcoinu/">/matematika_bitcoinu</a><br/>
 <a href="https://github.com/agama-point/the_mathematics_of_Bitcoin/">github//agama-point/the_mathematics_of_Bitcoin</a><br/>
+<a href="https://www.agamapoint.com/bit%c2%b7block%c2%b7rithm/">agamapoint.com/bit%c2%b7block%c2%b7rithm</a><br/>
+<a href="https://github.com/agama-point/Bit-Block-Rithm">github.com/agama-point/Bit-Block-Rithm</a><br/>
+
 <hr/>
 
 <br />

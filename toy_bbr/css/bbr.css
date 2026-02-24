@@ -201,7 +201,7 @@ button:hover {
 .empty { color: #666;}
 
 .hash-prev {
-    color: #0f0;
+    color: #0ff;
     font-family: monospace;
     word-break: break-all;
 }
@@ -219,6 +219,19 @@ button:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+
+.raw-data-box { 
+    background: #051105; 
+    padding: 8px; 
+    margin-top: 10px; 
+    border: 1px dashed #0a0;
+}
+
+
+.hash-val { color: #0ff; word-break: break-all; }
+.num-val { color: #ff0; }
+
 
 
 

@@ -5,14 +5,20 @@
 
 <hr />
 <h3>u_tests</h3>
-<b>ecc251 & hash</b><br />
+<b>ecc251</b><br />
 <a href="tests_examples/multi_inv.html">multi_inv</a> * modular inverse 1–256<br/>
 <a href="tests_examples/simple_ecc.html">simple_ecc</a> * jumps for different mod<br/> 
- 
-<a href="simple_ecc251.html">simple_ecc251.html</a> jumps on curve 251 (p5)<br/>
+<a href="tests_examples/simple_ecc251ec.html">simple_ecc251ec.html</a> jumps on curve 251 (p5) full info<br/>
+<br />
+
+<b>Agama simple hash</b><br />
 <a href="tests_examples/test_ash24.html">test_ash24.html</a> * hash24<br/>
 <a href="tests_examples/demo_24mining.html">demo_24mining.html</a> * fast mining<br/>
+<a href="tests_examples/test_ash24_collision.html">test_ash24_collision.html</a><br/>
+<a href="tests_examples/test_ash24_acsii_collision.html">test_ash24_acsii_collision.html</a> .:.<br/>
+<a href="tests_examples/test_ash32_collision.html">test_ash32_collision.html</a><br/>
 <br/>
+
 <b>sign & verify</b><br />
 <a href="tests_examples/test_sign251big.html">test_sign251big.html</a> * detailed message signing and verification<br/>
 <a href="tests_examples/test_sign251_val_inval.html">test_sign251_val_inval.html</a> * sign and verify – 16x loop<br/>

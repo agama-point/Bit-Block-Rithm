@@ -68,6 +68,11 @@ working with the coins
     </div>
 
     <div id="techInfo" class="info-box">
+
+<div>
+<img src="svg/bbr2601.svg" alt="Můj obrázek z Inkscape" width="600">
+</div>
+
 <pre>
 ---------------------------------------------
 <span class="b">[ blockchain math ]</span>

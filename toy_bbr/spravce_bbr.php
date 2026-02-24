@@ -51,8 +51,13 @@ $is_admin = !empty($_SESSION['admin']);
   </div>
 </div>
 
+
 <div class="container">
   <div class="content">
+
+<div>
+<img src="svg/bbr2601.svg" alt="Můj obrázek z Inkscape" width="600">
+</div>
 
 <?php if (!$is_admin): ?>
 
@@ -79,11 +84,22 @@ $is_admin = !empty($_SESSION['admin']);
 
 <a href="simple_ecc251.html">simple_ecc251.html</a> skoky na křivce 251<br/>
 <a href="test_ash24.html">test_ash24.html</a> hash24<br/>
+<a href="tests_examples/test_ash24_collision.html">test_ash24_collision.html</a><br/>
+<a href="tests_examples/test_ash24_acsii_collision.html">test_ash24_acsii_collision.html</a> .:.<br/>
+<a href="tests_examples/test_ash32_collision.html">test_ash32_collision.html</a><br/>
+<br />
 <a href="tests_examples/all251.html">all251</a> .:.<br/>
 <a href="test_sign251.html">test_sign251.html</a> podepsání a ověření zprávy<br/>
 <a href="test_sign251_16.html">test_sign251_16.html</a> podepsání a ověření - loop 16x<br/>
 <a href="test_tx.php">test_tx</a> první tx flow<br/> 
 <a href="tx_playground.php">tx_playground.php</a>ab / ba<br/>
+
+
+
+
+ 
+ 
+
 
       
 <?php 
