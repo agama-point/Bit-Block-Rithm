@@ -2,7 +2,8 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8">
-  <title>Modular inverse – vizualizace</title>
+  <title>Modular inverse</title>
+  <link rel="stylesheet" type="text/css" href="../css/bbr.css?v=1">
   <link rel="stylesheet" type="text/css" href="../css/dark.css">
   <script src="../js/p5.min.js"></script>
   <style>
@@ -10,6 +11,16 @@
   </style>
 </head>
 <body>
+<div class="container">
+    <h1 class="digip">Modular inverse</h1>
+
+<div>
+We compute the multiplicative inverse <span class="col_yel">modulo <i>n</i></span>.<br />
+This means - find a number <span class="col_yel"><i>x</i></span>
+ such that <span class="col_yel"> <i>a · x</i> ≡ 1 (mod <i>n</i>)</span><br />
+Therefore,
+<span class="col_yel"><i>a</i><sup>−1</sup> ≡ <i>x</i> (mod <i>n</i>)</span>
+</div>
 
 <script>
 let slider;
@@ -142,6 +153,6 @@ function draw() {
   text(`mod p = ${p}`, 60, height - 15);
 }
 </script>
-
+</div>
 </body>
 </html>

@@ -1,0 +1,52 @@
+bodyx {
+    font-family: Arial, sans-serif;
+    padding: 50px;
+    text-align: center;
+}
+#container_pres {
+    position: relative;
+    width: 490px;
+    height: 150px;
+    border: 1px solid dimgray;
+    margin: 0 auto;
+    overflow: hidden; /* Skrývá obsah mimo rámeček */
+}
+
+pre[id^="block"]  {
+    font-size: 18px;
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+    white-space: pre-wrap;
+    text-align: left;
+}
+.block-container {
+    display: none; /* Skryté, dokud není zobrazeno tlačítkem "Test" */
+    border: 1px solid green;
+    padding: 10px;
+    margin-top: 10px;
+    width: 350px;
+    text-align: left;
+}
+.block-container div {
+    margin-top: 10px;
+    border: 1px solid green;
+    padding: 10px;
+    height: 100px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+button, label {
+    background-color: black;
+    color: silver;
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 10px;
+}

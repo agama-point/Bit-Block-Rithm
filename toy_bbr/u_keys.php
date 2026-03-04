@@ -121,7 +121,8 @@ $(function() {
             if (P) {
                 $("#pub-point").text("[" + P[0] + ", " + P[1] + "]");
                 const address = pubkey_to_addr(P);
-                $("#pub-addr").text("0x" + address.toUpperCase());
+                //$("#pub-addr").text("0x" + address.toUpperCase());
+                $("#pub-addr").text(address);
             }
         } catch (e) {
             $("#pub-point").html("<span style='color:red;'>Error: " + e.message + "</span>");
@@ -186,4 +187,4 @@ $(function() {
     </div>
 </div>
 
-<script src="js/u_key251.js"></script>
+<script src="js/u_key251.js?v=2"></script>

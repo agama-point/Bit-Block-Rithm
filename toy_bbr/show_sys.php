@@ -35,7 +35,9 @@ let priv = sessionData.k1;
 //log("Používám privátní klíč (k1): " + priv);
 log("=========================");
 log("ESS251_VER: " + ESS251_VER);
+log(` -> Curve: y^2 = x^3 + ${ECC_PARAMS.b} mod ${ECC_PARAMS.p} | [${ECC_PARAMS.G[0]}, ${ECC_PARAMS.G[1]}]`);
 log("ASH24_VER: " + ASH24_VER);
+log("ASH32_VER: " + ASH32_VER);
 log("p5.js: " + p5.prototype.VERSION);
 log("========================="); 
 

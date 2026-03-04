@@ -23,7 +23,6 @@
 </head>
 <body>
 <h1 class="digip">Arithmetic Geometry over Galois Fields</h1>
-
 <div id="log2">
 This laboratory explores the isomorphic relationship between elliptic curves in discrete and continuous spaces. By mapping scalar multiplications within a Galois Field <b>GF(251)</b> onto a real-number Weierstrass projection, the visualization reveals the underlying algebraic symmetry that governs modern cryptographic systems. Each step illustrates the transformation of discrete lattice points into their geometric counterparts through parity-based sign reconstruction.
 </div>
@@ -36,7 +35,7 @@ This laboratory explores the isomorphic relationship between elliptic curves in 
       <div id="p5-container"></div>
       <div class="controls">
         <div style="font-size: 1.2em; margin-bottom: 10px;">Scalar (k): <b id="k-val" style="color:#ffcc00">1</b></div>
-        <input type="range" id="kSlider" min="1" max="4093" value="1">
+        <input type="range" id="kSlider" min="1" max="251" value="1">
         <div style="margin-top: 5px; font-size: 0.8em; color: #888;">Target Point: P = k · G</div>
       </div>
     </div>
@@ -45,10 +44,10 @@ This laboratory explores the isomorphic relationship between elliptic curves in 
 
 <script>
 /* --- CONSTANTS --- */
-const P = 3989; //251;
+const P = 251;
 const A = 0;
-const G = [1, 192];
-const B = 217; 
+const G = [10, 76];
+const B = 7; //217 
 
 function modN(n, m) { return ((n % m) + m) % m; }
 function inv_mod(x, mod_val) {

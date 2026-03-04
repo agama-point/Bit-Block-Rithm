@@ -5,8 +5,8 @@ new p5(pInst => {
     // Parametry ECC
     const pVal = 251; 
     const a = 0;
-    const Gx = 1;
-    const Gy = 192;
+    const Gx = 10;
+    const Gy = 76;
 
     pInst.setup = function() {
         // Zkontrolujeme, zda div existuje

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/base.css?cache_bust=${new Date().getTime()}">
+<link rel="stylesheet" href="css/digital_fonts.css">
+<link rel="stylesheet" href="css/app23dark.css?cache_bust=${new Date().getTime()}">
+
+<link rel="stylesheet" href="css/presentation.css">
+<script src="js/presentation.js"></script>
+</head>
+<body>
+
+<div class="flex2-container"><!--Fx2-->
+  <div class ="bg_bla"><!--F2L-->
+  :.
+  </div><!--/F2L-->
+  
+  
+  <div class="bg_bla"><!--F2R-->
+    <div>
+
+      <div id="container_pres"></div> <!-- Kontejner pro bloky -->
+      <script src="data1.js"></script>
+    <div id="present_control">
+      <button id="start">Start</button>
+      <button id="prev">Prev</button>
+      <button id="next">Next</button>
+      <button id="test">Test</button>
+      <label><input type="checkbox" id="endless" checked> Endless</label><br /><br />
+      <hr class="gre2dott">
+      </div>
+      <br />
+      <label><input type="checkbox" id="control"> Control</label>
+
+      <div id="testContainer" class="block-container"></div> <!-- Kontejner pro testovací zobrazení bloků -->
+      
+      <script>
+          const blocks = data.split('===').map(block => block.trim());
+          const actions = "top alfa alfa alfa alfa left".split(' ');
+          const blockDelay = 3500;
+      
+          // Vytvoříme prvky pre pro každý blok a přidáme je do kontejneru
+          blocks.forEach((blockContent, index) => {
+              const preElement = document.createElement('pre');
+              preElement.id = `block${index + 1}`;
+              preElement.innerHTML = blockContent;
+              document.getElementById('container_pres').appendChild(preElement);
+          });
+      
+          const presentation = new Presentation(blocks.map((_, index) => `#block${index + 1}`), actions, blockDelay);
+          
+          $('#start').click(function() { presentation.start(); });
+          $('#prev').click(function() { presentation.prev(); });
+          $('#next').click(function() { presentation.next(); });
+          $('#test').click(function() {
+              const $testContainer = $('#testContainer');
+              if ($testContainer.is(':empty')) {
+                  // Vygeneruje obsah při prvním kliknutí
+                  blocks.forEach(block => {
+                      const div = $('<div></div>').html(block);
+                      $testContainer.append(div);
+                  });
+              }
+              $testContainer.slideToggle(500);
+          });
+      </script>
+
+    </div>
+    </div><!--/F2R-->

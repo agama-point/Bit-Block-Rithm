@@ -1,14 +1,23 @@
 // ESS251: Elliptic Signature Scheme for p=251
 // Educational ECC toy library
 
-const ESS251_VER = "0.21 | 2026/02";
+const ESS251_VER = "0.31 | 2026/03";
 window.ESS251_VER = ESS251_VER;
 
 const P_MOD = 251;
 const A_PARAM = 0;
 const B_PARAM = 7;
-const G_POINT = [1, 192];
+const G_POINT = [10, 76]; //[1, 192]; max_order
 const ORDER_N = 252;
+
+window.ECC_PARAMS = {
+  p: P_MOD,
+  a: A_PARAM,
+  b: B_PARAM,
+  G: G_POINT,
+  n: ORDER_N
+};
+
 
 // --- ALWAYS NON-NEGATIVE MODULO ---
 function modN(n, m) {
@@ -90,25 +99,42 @@ function signToy(private_key, msg_hash, debug = false) {
     return { r: r, s: s, R_point: R_point };
 }
 
-// Verify signature
-function verifyToy(public_key_point, msg_hash, signature, debug = false) {
+function verifyToy(pubKeyPoint, msgHash, signature, debug = false) {
     if (debug) console.log("\n[DEBUG-VERIFY] Starting verification process...");
 
     let { r, s, R_point } = signature;
-    let e = modN(msg_hash, ORDER_N);
+    let e = modN(msgHash, ORDER_N);
 
-    let L = scalar_mult(s, G_POINT).map(v => modN(v, P_MOD));
-    let e_Pub = scalar_mult(e, public_key_point).map(v => modN(v, P_MOD));
-    let P = point_adding(R_point, e_Pub).map(v => modN(v, P_MOD));
+    // Left side of the equation: L = s * G
+    let L = scalar_mult(s, G_POINT);
+    
+    // Right side components: P = R + (e * PubKey)
+    let ePubKey = scalar_mult(e, pubKeyPoint);
+    let P = point_adding(R_point, ePubKey);
 
     if (debug) {
+        const fmt = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF (Infinity)";
         console.log(`[DEBUG-VERIFY] Challenge e: ${e}`);
-        console.log(`[DEBUG-VERIFY] L = s*G: [${L}]`);
-        console.log(`[DEBUG-VERIFY] P = R + e*PubKey: [${P}]`);
+        console.log(`[DEBUG-VERIFY] L = s * G: ${fmt(L)}`);
+        console.log(`[DEBUG-VERIFY] e * PubKey: ${fmt(ePubKey)}`);
+        console.log(`[DEBUG-VERIFY] P = R + e*PubKey: ${fmt(P)}`);
     }
 
-    return L !== null && P !== null && L[0] === P[0] && L[1] === P[1];
+    // Handle Point at Infinity (null) before mapping or comparing
+    if (L === null || P === null) {
+        if (debug) console.log("[DEBUG-VERIFY] Result: One or both sides reached Infinity.");
+        return L === P; // Valid only if both sides are Infinity (null)
+    }
+
+    const isValid = (L[0] === P[0] && L[1] === P[1]);
+    
+    if (debug) {
+        console.log(`[DEBUG-VERIFY] Match: ${isValid ? "YES ✅" : "NO ❌"}`);
+    }
+
+    return isValid;
 }
+
 
 function sig_to_hexa(signature){
     let rHex = signature.r.toString(16).padStart(2,'0');

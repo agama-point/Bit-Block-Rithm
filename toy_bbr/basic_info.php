@@ -35,6 +35,8 @@
 
 <div class="info-container">
     <div id="basicInfo" class="info-box">
+<img src="svg/bbr_block.svg" alt="Blockchain" width="650">
+ 
 <pre>
 create account or login
 "Test" | psw Test ->
@@ -70,7 +72,7 @@ working with the coins
     <div id="techInfo" class="info-box">
 
 <div>
-<img src="svg/bbr2601.svg" alt="Můj obrázek z Inkscape" width="600">
+<img src="svg/bbr2601.svg" alt="test" width="650">
 </div>
 
 <pre>

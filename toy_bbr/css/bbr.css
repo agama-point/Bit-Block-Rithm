@@ -17,6 +17,14 @@ body {
   color: Orange;
 }
 
+.col_whi {color: white;}
+.col_red {color: red;}
+.col_sil {color: silver;}
+.col_gre {color: green;}
+.col_yel {color: yellow;}
+
+
+
 pre {
     margin-top:10px;
     color:#0f0;

@@ -1,7 +1,7 @@
 /* ====== js/u_key251.js ====== */
 new p5(pInst => {
     const P_MOD = 251;
-    const G_POINT = [1, 192];
+    const G_POINT = [10, 76];
     const A_PARAM = 0;
     
     let targetK = 1;
@@ -62,7 +62,7 @@ new p5(pInst => {
             const screenY = margin + (P_MOD - 1 - currentPoint[1]) * cell;
 
             if (prevScreenX !== null) {
-                pInst.stroke(0, 250, 0, 150);
+                pInst.stroke(0, 250, 0, 80);
                 pInst.line(prevScreenX, prevScreenY, screenX, screenY);
             }
 

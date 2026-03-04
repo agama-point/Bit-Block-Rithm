@@ -27,7 +27,7 @@ $sig_hex = $row['sig'] ?? '';
     <link rel="stylesheet" href="css/bbr.css">
     <script src="js/jquery.min.js"></script>
     <script src='js/ash24.js'></script>
-    <script src='js/ess251.js'></script>
+    <script src='js/ess251.js?v=0.31'></script>
     <style>
         body { background-color: #0a0a0a; color: #eee; font-family: 'Courier New', monospace; padding: 20px; font-size: 1em; margin: 0; overflow: hidden; }
         
@@ -190,6 +190,9 @@ function doVerify() {
         let R_point = scalar_mult(k_nonce, G_POINT);
         let sigObj = { r: sParts.r, s: sParts.s, R_point: R_point };
 
+        log("ESS251_VER: " + ESS251_VER);
+        log(` -> Curve: y^2 = x^3 + ${ECC_PARAMS.b} mod ${ECC_PARAMS.p} | [${ECC_PARAMS.G[0]}, ${ECC_PARAMS.G[1]}]`);
+
         log("----- VERIFICATION PROCESS -----");
         log("Message: " + msg);
         log("h_raw: " + h_raw);
@@ -202,13 +205,22 @@ function doVerify() {
         let valid = verifyToy(pubPoint, h_raw, sigObj);
 
         let e = modN(h_raw, ORDER_N);
-        let L = scalar_mult(sigObj.s, G_POINT).map(v => modN(v, P_MOD));
-        let e_Pub = scalar_mult(e, pubPoint).map(v => modN(v, P_MOD));
-        let P = point_adding(sigObj.R_point, e_Pub).map(v => modN(v, P_MOD));
-
         log("Step 1: Challenge e = hash mod n = " + e);
-        log("Step 2: L = s * G = [" + L + "]");
-        log("Step 3: P = R + e * PubKey = [" + P + "]");
+
+        //let L = scalar_mult(sigObj.s, G_POINT).map(v => modN(v, P_MOD));
+        //let e_Pub = scalar_mult(e, pubPoint).map(v => modN(v, P_MOD));
+        //let P = point_adding(sigObj.R_point, e_Pub).map(v => modN(v, P_MOD));
+
+   const safeMap = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF (Point at Infinity)";
+   let L = scalar_mult(sigObj.s, G_POINT);
+   let e_Pub = scalar_mult(e, pubPoint);
+   let P = point_adding(sigObj.R_point, e_Pub);
+   // A při logování:
+   log("Step 2: L = s * G = " + safeMap(L));
+   log("Step 3: P = R + e * PubKey = " + safeMap(P));
+
+        //log("Step 2: L = s * G = [" + L + "]");
+        //log("Step 3: P = R + e * PubKey = [" + P + "]");
         log("Output: valid = " + valid);
 
         if (valid) {

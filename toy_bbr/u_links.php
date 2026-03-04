@@ -22,6 +22,7 @@ include "basic_info.php";
 <h3>Tests & Examples</h3>
 <a href="tests_examples/multi_inv.html">multi_inv</a> * modular inverse 1–256<br/>
 <a href="tests_examples/simple_ecc.html">simple_ecc</a> * jumps for different mod<br/> 
+<a href="tests_examples/test_donut.html">donut</a> * test_donut<br/>
 <br />
 ECC251<br />
 <a href="tests_examples/simple_ecc251ec.html">tests_examples/simple_ecc251ec</a> jumps on curve 251 <br/>

@@ -4,6 +4,7 @@
 
 <?php 
 include "basic_info.php"; 
+include "u_links.php";
 ?>
 
 <hr/>

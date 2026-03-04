@@ -30,7 +30,7 @@ if (!in_array($page, $allowed_pages)) {
 <script src="js/agama_bech32.js"></script>
 <script src="js/ash24.js?v=0.11"></script>
 <script src="js/ash32.js?v=0.10"></script>
-<script src="js/ess251.js?v=0.21"></script>
+<script src="js/ess251.js?v=0.23"></script>
 <script src="js/qrcode.js"></script> 
 <script src="js/p5.min.js"></script>
 

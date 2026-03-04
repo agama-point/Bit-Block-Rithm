@@ -1,7 +1,8 @@
 <h1 class="digip">SYSTEM</h1>
 
 <?php 
-include "u_tools.php"; 
+include "tool_ash24.php"; 
+include "tool_ash32.php";
 
 include "show_sys.php";
  

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ECC Max Order Finder</title>
+<link rel="stylesheet" type="text/css" href="../css/bbr.css">
+<script src="../js/jquery.min.js"></script>
+<style>
+
+input { width:60px; margin-right:10px; }
+button { margin-left:10px; }
+#log { color: green; white-space: pre-wrap; border:1px solid #0f0; padding:10px; margin-top:10px; height:400px; overflow:auto; }
+</style>
+</head>
+<body>
+
+<h2>ECC Max Order Finder</h2>
+<a href = "simple_ecc.html">simple_ecc.html</a>
+<p>
+mod p: <input type="number" id="p" value="251">
+a: <input type="number" id="a" value="0">
+b: <input type="number" id="b" value="7">
+<button id="compute">Compute</button>
+</p>
+
+<div id="log"></div>
+
+<script>
+// ===== Prime Check =====
+function isPrime(n){
+    if(n<2) return false;
+    for(let i=2;i*i<=n;i++){
+        if(n%i===0) return false;
+    }
+    return true;
+}
+
+// ===== Modular Arithmetic =====
+function mod(n,p){ return ((n%p)+p)%p; }
+
+// ===== Point Addition =====
+function invMod(x,p){
+    // Extended Euclidean Algorithm
+    let a=x,b=p,u=1,v=0;
+    while(b!==0){
+        let q=Math.floor(a/b);
+        [a,b] = [b, a - q*b];
+        [u,v] = [v, u - q*v];
+    }
+    return mod(u,p);
+}
+
+function pointAdd(P,Q,a,p){
+    if(P===null) return Q;
+    if(Q===null) return P;
+    let [x1,y1] = P;
+    let [x2,y2] = Q;
+
+    if(x1===x2 && y1===mod(-y2,p)) return null; // P + (-P) = O
+
+    let m;
+    if(x1===x2 && y1===y2){
+        // doubling
+        m = mod((3*x1*x1 + a)*invMod(2*y1,p),p);
+    }else{
+        m = mod((y2-y1)*invMod(x2-x1,p),p);
+    }
+
+    let x3 = mod(m*m - x1 - x2,p);
+    let y3 = mod(m*(x1 - x3) - y1,p);
+    return [x3,y3];
+}
+
+// ===== Scalar Multiplication =====
+function scalarMul(k,P,a,p){
+    let R = null;
+    let Q = P;
+    while(k>0){
+        if(k%2===1) R = pointAdd(R,Q,a,p);
+        Q = pointAdd(Q,Q,a,p);
+        k = Math.floor(k/2);
+    }
+    return R;
+}
+
+// ===== Compute All Points =====
+function computePoints(a,b,p){
+    let points = [];
+    for(let x=0;x<p;x++){
+        let rhs = mod(x*x*x + a*x + b,p);
+        for(let y=0;y<p;y++){
+            if(mod(y*y,p)===rhs) points.push([x,y]);
+        }
+    }
+    points.push(null); // point at infinity
+    return points;
+}
+
+// ===== Factorization =====
+function factorize(n){
+    let factors = [];
+    let d=2;
+    while(n>1 && d*d<=n){
+        let count=0;
+        while(n%d===0){ n/=d; count++; }
+        if(count>0) factors.push(d);
+        d++;
+    }
+    if(n>1) factors.push(n);
+    return factors;
+}
+
+// ===== Max Order Finder =====
+function findMaxOrder(points,a,p){
+    let maxOrder = 0;
+    let maxPoint = null;
+    for(let idx=0; idx<points.length-1; idx++){
+        let P = points[idx];
+        if(P===null) continue;
+        let order = 1;
+        let Q = P;
+        while(Q!==null){
+            Q = pointAdd(Q,P,a,p);
+            order++;
+        }
+        if(order>maxOrder){
+            maxOrder = order;
+            maxPoint = P;
+        }
+        if(idx%50===0) $("#log").append(`Checked point ${idx+1}/${points.length}\n`);
+    }
+    return [maxPoint,maxOrder];
+}
+
+// ===== Button Handler =====
+$("#compute").click(function(){
+    $("#log").text("");
+    let p = parseInt($("#p").val());
+    let a = parseInt($("#a").val());
+    let b = parseInt($("#b").val());
+
+    $("#log").append(`Checking p=${p}: ${isPrime(p)?'prime':'not prime'}\n`);
+    $("#log").append(`Curve: y^2 = x^3 + ${a}x + ${b} mod ${p}\n\n`);
+
+    let points = computePoints(a,b,p);
+    $("#log").append(`Total points (including infinity): ${points.length}\n`);
+
+    $("#log").append("Searching for point with maximum order...\n");
+
+    setTimeout(function(){ // allow log to update
+        let [G,maxOrder] = findMaxOrder(points,a,p);
+        if(G!==null){
+            $("#log").append(`\nMax order point: [${G[0]},${G[1]}] with order ${maxOrder}\n`);
+        }else{
+            $("#log").append("\nNo valid finite points found!\n");
+        }
+    },50);
+});
+</script>
+
+</body>
+</html>

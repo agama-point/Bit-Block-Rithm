@@ -1,75 +1,139 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>ECC – diskrétní sčítání bodů</title>
+<meta charset="utf-8">
+<title>ECC – Discrete Point Addition</title>
+  <link rel="stylesheet" type="text/css" href="../css/bbr.css">
   <link rel="stylesheet" type="text/css" href="../css/dark.css">
-  <script src="../js/p5.min.js"></script>
-  <script src="../js/ecc.js"></script>
+<script src="../js/p5.min.js"></script>
+<script src="../js/ecc.js"></script>
 
-  <style>
-    body { font-family: sans-serif; }
-  </style>
+<style>
+#log {
+  font-family: sans-serif;
+  color:#0f0;
+  background:#111;
+  padding:10px;
+  margin-top:10px;
+  min-height:60px;
+}
+.controls {
+  margin:10px 0;
+}
+input {
+  width:70px;
+}
+button {
+  margin-left:10px;
+}
+</style>
 </head>
+
 <body>
+<div class="container">
+
+<div class="container">
+    <h1 class="digip">Simple ECC</h1>
+
+<pre>
+  2      3      5      7 [1,1] 11     13     17 [15,13]    19     23  
+ 31     37     41     43      47     53     59     61     67     71 
+ 73     79     83     89      97    101    103    107    109    113 
+127    131    137    139     149    151    157    163    167    173 
+179    181    191    193     197    199    211    223    227    229 
+ 233    239    241    <span class="col_yel">251 [10,76]</span>    257    263    269    271    277    
+</pre>
+<a href = "max_order.html">max_order.html</a>
+
+
+<div class="controls">
+  Gx: <input type="number" id="gx" value="15">
+  Gy: <input type="number" id="gy" value="13">
+  <button onclick="recalculate()">Recalculate</button>
+</div>
 
 <script>
-/* ====== PRIMES ====== */
+
+/* ===== PRIMES ===== */
 
 let primes = [];
 
-function isPrime(n) {
-  if (n < 2) return false;
-  for (let i = 2; i * i <= n; i++) {
-    if (n % i === 0) return false;
+function isPrime(n){
+  if(n < 2) return false;
+  for(let i = 2; i * i <= n; i++){
+    if(n % i === 0) return false;
   }
   return true;
 }
 
-function buildPrimes() {
-  for (let i = 3; i <= 256; i++) {
-    if (isPrime(i)) primes.push(i);
+function buildPrimes(){
+  for(let i = 3; i <= 256; i++){
+    if(isPrime(i)) primes.push(i);
   }
 }
 
-/* ====== ECC PARAMETRY ====== */
+/* ===== ECC PARAMETERS ===== */
 
 const a = 0;
 const b = 7;
 
-// výchozí bod G
-const Gx = 15;
-const Gy = 13;
-
 let slider;
+let currentGx = 15;
+let currentGy = 13;
 
-/* ====== P5 ====== */
+/* ===== CURVE CHECK ===== */
 
-function setup() {
-  createCanvas(350, 350);
-
-  buildPrimes();
-
-  slider = createSlider(0, primes.length - 1, primes.indexOf(17));
-  slider.position(10, height + 10);
+function isOnCurve(x, y, a, b, p){
+  const L = (y * y) % p;
+  const R = (x * x * x + a * x + b) % p;
+  return { ok: L === R, L, R };
 }
 
-function draw() {
+/* propose a valid point with same x */
+function proposePoint(x, a, b, p){
+  const rhs = (x*x*x + a*x + b) % p;
+  for(let y = 0; y < p; y++){
+    if((y*y) % p === rhs){
+      return [x, y];
+    }
+  }
+  return null;
+}
+
+/* ===== P5 ===== */
+
+function setup(){
+  createCanvas(350,350);
+  buildPrimes();
+  slider = createSlider(0, primes.length-1, primes.indexOf(17));
+  slider.position(10, height + 10);
+  slider.input(recalculate);
+}
+
+function recalculate(){
+  currentGx = parseInt(document.getElementById("gx").value);
+  currentGy = parseInt(document.getElementById("gy").value);
+  redraw();
+}
+
+function draw(){
+
   background(32);
 
   const p = primes[slider.value()];
   const margin = 25;
   const size = 300;
-  const cell = size / (p - 1);
+  const cell = size/(p-1);
+
+  let logText = "";
 
   /* grid */
   stroke(0,100,0);
-  for (let i = 0; i < p; i++) {
-    line(margin, margin + i * cell, margin + size, margin + i * cell);
-    line(margin + i * cell, margin, margin + i * cell, margin + size);
+  for(let i = 0; i < p; i++){
+    line(margin, margin + i*cell, margin + size, margin + i*cell);
+    line(margin + i*cell, margin, margin + i*cell, margin + size);
   }
 
-  /* rám */
   stroke(0,128,0);
   noFill();
   rect(margin, margin, size, size);
@@ -77,46 +141,60 @@ function draw() {
   textSize(9);
   textAlign(LEFT, BOTTOM);
 
-  /* ECC výpočet */
-  let px = Gx;
-  let py = Gy;
+  let px = currentGx;
+  let py = currentGy;
 
   let prevX = null;
   let prevY = null;
 
-  for (let k = 1; k <= p; k++) {
+  for(let k = 1; k <= p; k++){
+
     const x = margin + px * cell;
     const y = margin + (p - 1 - py) * cell;
 
-    /* spojnice */
-    if (prevX !== null) {
+    if(prevX !== null){
       stroke(160);
-      strokeWeight(1);
       line(prevX, prevY, x, y);
     }
 
-    /* bod */
     noStroke();
-    if (k === 1) {
-      fill(0);                // G
+    if(k === 1){
+      fill(0);              // base point
     } else {
-      fill(255, 140, 0);      // ostatní
+      fill(255,140,0);      // other multiples
     }
     circle(x, y, 6);
 
-    /* popisek násobku */
     fill(0,200,0);
-    text(k, x + 4, y - 4);
+    text(k, x+4, y-4);
+
+    /* log first 3 multiples */
+    if(k <= 3){
+      const check = isOnCurve(px, py, a, b, p);
+
+      logText += `${k}*G = [${px},${py}] `;
+      logText += `L=${check.L}, R=${check.R}, ${check.ok}`;
+
+      if(!check.ok){
+        const proposal = proposePoint(px, a, b, p);
+        if(proposal){
+          logText += ` → proposed valid point [${proposal[0]},${proposal[1]}]`;
+        } else {
+          logText += ` → no valid point exists`;
+        }
+      }
+
+      logText += "\n";
+    }
 
     prevX = x;
     prevY = y;
 
-    /* další krok */
-    try {
-      if (k === 1) {
+    try{
+      if(k === 1){
         [px, py] = point_doubling(px, py, a, p);
       } else {
-        [px, py] = point_adding(px, py, Gx, Gy, p);
+        [px, py] = point_adding(px, py, currentGx, currentGy, p);
       }
     } catch {
       break;
@@ -127,8 +205,17 @@ function draw() {
   fill(0,200,0);
   textSize(12);
   text(`p = ${p}`, 10, 20);
+
+  document.getElementById("log").textContent = logText;
+
+  noLoop();  // redraw only on interaction
 }
+
 </script>
 
+<h3>Log</h3>
+<pre id="log"></pre>
+
+</div>
 </body>
 </html>
