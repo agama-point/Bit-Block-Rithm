@@ -1,9 +1,11 @@
-<div style="background:#000;color:#0f0;padding:10px;margin:20px 0;font-family:monospace;border:1px solid #0f0;">
-<h3>SYS DEBUG</h3>
-
-<pre id="log-system" style="white-space: pre-wrap; margin: 0;"></pre>
+<br />
+<div class="box2">
+<h3 class="col_gre">SYS. DEBUG</h3>
+<pre id="log-system" class="log"></pre>
 
 <script>
+//style="white-space: pre-wrap; margin: 0;"
+
     (function() {
         // Používáme anonymní funkci, aby se proměnné nepletly s ostatními skripty
         document.addEventListener("DOMContentLoaded", function() {
@@ -14,7 +16,6 @@
                 k1:   <?php echo json_encode($_SESSION['k1'] ?? 111); ?>,
                 mdel: <?php echo json_encode($_SESSION['minerdelay'] ?? 0); ?>
             };
-
             // 2. Definice logovací funkce s kontrolou existence elementu
             const logElement = document.getElementById("log-system");
             
@@ -30,7 +31,6 @@
 log("===== SESSION DEBUG =====");
 log("user: " + sessionData.nick);
             
-// Vaše požadovaná implementace k1
 let priv = sessionData.k1; 
 //log("Používám privátní klíč (k1): " + priv);
 log("=========================");
@@ -69,8 +69,6 @@ if (sessionData.mdel > 100) {
 }
 
 // Např. window.myCurrentPrivKey = sessionData.k1;
-
-
 //================== end ===========================
 });
 })();

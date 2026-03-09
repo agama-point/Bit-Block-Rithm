@@ -1,16 +1,14 @@
-<div style="background:#000;color:#0f0;padding:10px;margin:20px 0;font-family:monospace;border:1px solid #0f0;">
-    <h3>ASH32</h3>
+<div class="box2">
+    <h3 class="col_ora">32-bit hash function ASH32</h3>
 
-    <input type="text" id="tool-input2" maxlength="60" style="width:250px; font-family:monospace;" placeholder="Enter hex or data" />
+    <input type="text" id="tool-input2" maxlength="63" style="width:300px; font-family:monospace;" placeholder="Enter hex or data" />
 
     <div style="margin-top:10px;">
         <button id="btn-hash32">HASH32</button>
-        <button id="btn-hex2addrx"> ... </button>
-        
+        <button id="btn-hex2addrx"> ... </button>        
     </div>
 
-    <div id="tool-output2" style="margin-top:15px; white-space: pre-wrap;"></div>
-
+    <div id="tool-output2" class="log"></div>
 </div>
 
 <script>

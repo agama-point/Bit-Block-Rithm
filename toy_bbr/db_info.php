@@ -1,8 +1,13 @@
+<div class="flex-wrap">
+  
+  <div class="flex-left">
+    <div class="panel">
+      <h3 class="digip">Database Overview:</h3>
+
+
 <?php
 $db = new SQLite3(__DIR__ . "/main.db");
-
-echo "<h3>Database Overview: ****************.db</h3>";
-echo "<table border='1' cellpadding='5'>";
+echo "<table class=\"tab\">";
 echo "<tr><th>Table Name</th><th>Number of Records</th><th>Last Modified (if available)</th></tr>";
 
 // 1. Seznam všech tabulek
@@ -39,3 +44,21 @@ while($tbl = $tablesRes->fetchArray(SQLITE3_ASSOC)){
 }
 
 echo "</table><hr />";
+?>
+
+      </div>
+  </div>
+
+  <div class="flex-right">
+    <div class="panel">
+      <h3 class="digip">Log</h3>
+      <div id="log">...last...</div>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+

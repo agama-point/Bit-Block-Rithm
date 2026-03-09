@@ -1,9 +1,13 @@
 <h1 class="digip">TESTS & EXAMPLES</h1>
 
-<div id="p5-holder" style="border: 2px solid #333; display: inline-block; line-height: 0;"></div>    
-<script src="js/test_sq.js"></script>
 
-<hr />
+<div class="flex-wrap">
+  
+  <div class="flex-left">
+    <div class="panel">
+      
+
+
 <h3>u_tests</h3>
 <b>ecc251</b><br />
 <a href="tests_examples/multi_inv.html">multi_inv</a> * modular inverse 1–256<br/>
@@ -25,4 +29,17 @@
 <br/>
 <b>transactions</b><br />
 <a href="tx_playground.php">tx_playground</a> api ab / ba <br/>
-<hr />
+
+
+
+      </div>
+  </div>
+
+  <div class="flex-right">
+    <div class="panel">
+      <div id="p5-holder" style="border: 2px solid #333; display: inline-block; line-height: 0;"></div>    
+      <script src="js/test_sq.js"></script>
+    </div>
+  </div>
+
+</div>

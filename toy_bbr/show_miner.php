@@ -1,12 +1,9 @@
 <?php
-// Nepřepisujme session zde! Jen načíst
 $currentDelay = $_SESSION['minerdelay'] ?? 5; 
 ?>
 
-<div style="background:#000;color:#0f0;padding:10px;margin:20px 0;font-family:monospace;border:1px solid #0f0;">
-<h3>MINER DEBUG</h3>
-
-<pre id="log-system" style="white-space: pre-wrap; margin: 0;"></pre>
+<h3 class="col_gre">MINER DEBUG</h3>
+<pre id="log-system" class="log"></pre>
 
 <script>
 (function() {
@@ -27,8 +24,6 @@ $currentDelay = $_SESSION['minerdelay'] ?? 5;
                 console.error("Chyba: Element #log-system nebyl nalezen!");
             }
         }
-
-        // ======================= start ====================
         log("===== SESSION =====");
         log("user: " + sessionData.nick);
         
@@ -42,8 +37,7 @@ $currentDelay = $_SESSION['minerdelay'] ?? 5;
         }
         
         log("=========================");
-        // ======================= end ====================
     });
 })();
 </script>
-</div>
+

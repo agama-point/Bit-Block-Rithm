@@ -6,21 +6,21 @@ $current_k1 = $_SESSION['k1'] ?? null;
 
 <h1 class="digip">WALLET</h1>
 
-<div class="box" style="border: 1px solid #333; padding: 15px; border-radius: 8px;">
-<h3>Send</h3>
+<div class="box1">
+<h3 class="col_ora">Send | Transfer funds to a destination address</h3>
 
 <div style="display:flex; align-items:center; gap:20px;">
   <div>
  <input type="text" id="targetAddr" placeholder="Recipient address (e.g., e875)" style="width:150px; height:30px;">
 
-  <input type="number" id="sendAmount" value="3" style="width:60px">
+  <input type="number" id="sendAmount" value="3" style="width:35px">
   <button id="sendBtn" style="color:#0f0; border-color:#0f0;">Send</button>
 
   <button type="button" class="addr-btn" data-addr="7214">A:7214</button>
   <button type="button" class="addr-btn" data-addr="83ca">B:83ca</button>
   <button type="button" class="addr-btn" data-addr="0aaf">C:0aaf</button>
 
-  <div id="addrError" style="color: #ff4444; font-size: 12px; margin-top: 5px; display: none;">
+  <div id="addrError" style="color: #ff3333; margin-top: 5px; display: none;">
     Invalid format! Use lowercase hex (0-9, a-f) only.
   </div>
   </div>

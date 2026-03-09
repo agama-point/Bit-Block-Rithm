@@ -1,7 +1,7 @@
 // ESS251: Elliptic Signature Scheme for p=251
 // Educational ECC toy library
 
-const ESS251_VER = "0.31 | 2026/03";
+const ESS251_VER = "0.33 | 2026/03";
 window.ESS251_VER = ESS251_VER;
 
 const P_MOD = 251;
@@ -78,62 +78,74 @@ function scalar_mult(k, P, a = A_PARAM, p = P_MOD, n = ORDER_N) {
     return result;
 }
 
-// Sign message hash
+// --- Idealized toy-signing function ---
 function signToy(private_key, msg_hash, debug = false) {
     if (debug) console.log("\n[DEBUG-SIGN] Starting signing process...");
 
-    let k_nonce = modN(msg_hash ^ 0x55, ORDER_N);
-    if (k_nonce === 0) k_nonce = 1;
+    // Convert string hex or decimal input to integer
+    if (typeof msg_hash === "string") {
+        msg_hash = msg_hash.startsWith("0x") ? parseInt(msg_hash, 16) : parseInt(msg_hash, 16);
+    }
 
-    let R_point = scalar_mult(k_nonce, G_POINT, A_PARAM, P_MOD, ORDER_N);
-    let r = R_point[0];
+    // Deterministic toy nonce (must be non-zero)
+    let k = (msg_hash ^ 0x55) % ORDER_N;
+    if (k === 0) k = 1;
+
+    // Compute R = k * G
+    let R_point = scalar_mult(k, G_POINT, A_PARAM, P_MOD, ORDER_N);
+    let r = modN(R_point[0], ORDER_N); // x-coordinate mod n
+
+    // Compute e = msg_hash mod n
     let e = modN(msg_hash, ORDER_N);
-    let s = modN(k_nonce + e * private_key, ORDER_N);
+
+    // Compute s = (k + e * priv) mod n
+    let s = modN(k + e * private_key, ORDER_N);
 
     if (debug) {
-        console.log(`[DEBUG-SIGN] Nonce k: ${k_nonce}`);
-        console.log(`[DEBUG-SIGN] R-Point (k*G): ${R_point}`);
-        console.log(`[DEBUG-SIGN] Signature components: r=${r}, s=${s}`);
+        console.log(`[DEBUG-SIGN] msg_hash = ${msg_hash}`);
+        console.log(`[DEBUG-SIGN] Nonce k = ${k}`);
+        console.log(`[DEBUG-SIGN] R_point = [${R_point}]`);
+        console.log(`[DEBUG-SIGN] r = ${r}, s = ${s}`);
     }
 
     return { r: r, s: s, R_point: R_point };
 }
 
+
 function verifyToy(pubKeyPoint, msgHash, signature, debug = false) {
+    if (typeof msgHash === "string") {
+        msgHash = msgHash.startsWith("0x") ? parseInt(msgHash,16) : parseInt(msgHash,16);
+    }
+
     if (debug) console.log("\n[DEBUG-VERIFY] Starting verification process...");
 
     let { r, s, R_point } = signature;
     let e = modN(msgHash, ORDER_N);
 
-    // Left side of the equation: L = s * G
+    // Left side: s * G
     let L = scalar_mult(s, G_POINT);
-    
-    // Right side components: P = R + (e * PubKey)
+
+    // Right side: R + e*PubKey
     let ePubKey = scalar_mult(e, pubKeyPoint);
     let P = point_adding(R_point, ePubKey);
 
     if (debug) {
-        const fmt = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF (Infinity)";
+        const fmt = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF";
         console.log(`[DEBUG-VERIFY] Challenge e: ${e}`);
-        console.log(`[DEBUG-VERIFY] L = s * G: ${fmt(L)}`);
-        console.log(`[DEBUG-VERIFY] e * PubKey: ${fmt(ePubKey)}`);
+        console.log(`[DEBUG-VERIFY] L = s*G: ${fmt(L)}`);
+        console.log(`[DEBUG-VERIFY] e*PubKey: ${fmt(ePubKey)}`);
         console.log(`[DEBUG-VERIFY] P = R + e*PubKey: ${fmt(P)}`);
     }
 
-    // Handle Point at Infinity (null) before mapping or comparing
-    if (L === null || P === null) {
-        if (debug) console.log("[DEBUG-VERIFY] Result: One or both sides reached Infinity.");
-        return L === P; // Valid only if both sides are Infinity (null)
-    }
+    // Handle Infinity points
+    if (L === null || P === null) return L === P;
 
     const isValid = (L[0] === P[0] && L[1] === P[1]);
-    
-    if (debug) {
-        console.log(`[DEBUG-VERIFY] Match: ${isValid ? "YES ✅" : "NO ❌"}`);
-    }
+    if (debug) console.log(`[DEBUG-VERIFY] Match: ${isValid ? "YES ✅" : "NO ❌"}`);
 
     return isValid;
 }
+
 
 
 function sig_to_hexa(signature){

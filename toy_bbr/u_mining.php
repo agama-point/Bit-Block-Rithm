@@ -1,19 +1,29 @@
-<div class="container">
-<?php 
-include "u_coinbase.php"; 
-?>
+<h1 class="digip">MINING</h1>
+
+<div class="flex-wrap">
+<div class="flex-left">
+   <div class="panel">
+   <?php 
+   include "u_coinbase.php"; ?>
+   </div>
 </div>
-<div class="container">
-<?php 
-include "show_miner.php"; 
-?>
+
+<div class="flex-right">
+   <div class="panel">
+   <?php 
+   include "show_miner.php"; ?>
+   </div>
 </div>
-<hr />
+</div>
+
+<br />
+<div class="box1">
+<h3 class="col_ora">Mining Demo</h3>
 Base string:
 <input type="text" id="base" value="AGAMA">
 <button id="start">START</button>
 
-<pre id="output"></pre>
+<pre id="output" class="log"></pre>
 
 <script>
 let running = false;
@@ -99,9 +109,9 @@ $("#start").click(function () {
 AGAMA151418        *   000007  000000000000000000000111
 0645657            *   00000f  000000000000000000001111 
 </pre>
+</div>
 
 <?php 
 include "table_utxo.php"; 
 include "table_tx2m.php";
-
 ?>
