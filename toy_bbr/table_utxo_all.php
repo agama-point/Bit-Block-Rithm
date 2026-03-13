@@ -27,7 +27,7 @@
 
 <hr />
 <h3>Last 10 UTXOs (Coins in Circulation):</h3>
-<table class="tx-table">
+<table class="tab">
     <thead>
         <tr>
             <th>ID</th>

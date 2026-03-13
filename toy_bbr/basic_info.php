@@ -6,8 +6,7 @@
         border: 1px solid;
         min-height: 200px; /* Aby stránka při přepínání neposkakovala */
     }
-    #basicInfo { color: #0f0; border-color: #0f0; }
-    #techInfo {  color: #0cf; border-color: #0cf;  display: none; /* Výchozí stav: schováno */
+    #techInfo {  display: none; /* Výchozí stav: schováno */
     }
     .controls {  display: flex;  gap: 5px;   }
     buttonX {
@@ -37,30 +36,31 @@
     <div id="basicInfo" class="info-box">
 <img src="svg/bbr_block.svg" alt="Blockchain" width="650">
  
-<pre>
+<pre class="log">
 create account or login
 "Test" | psw Test ->
 ---------------------------------------------
 
-<span class="b">[ keys ]</span>
+<span class="col_ora">[ keys ]</span>
 generation of a private key:
 - with visualization of jumps on the ECC251 curve
 - or numerical value
+<span class="col_ora">  A = a * G | B = b* G</span>
 
+<span class="col_ora">[ wallet ]</span>
 obtaining the first coins:
 - mining
 - receiving from someone
 
-<span class="b">[ wallet ]</span>
 working with the coins
 - sending
 - tracking UTXO
 
-<span class="b">[ mining ]</span>
+<span class="col_ora">[ mining ]</span>
 - empty block
 - transaction
 
-<span class="b">[ consider the vulnerabilities and attack vectors ]</span>
+<span class="col_ora">[ consider the vulnerabilities and attack vectors ]</span>
 - limited number of private keys
 - address collisions
 - low bit depth from 24-bit hashing
@@ -77,7 +77,7 @@ working with the coins
 
 <pre>
 ---------------------------------------------
-<span class="b">[ blockchain math ]</span>
+<span class="col_ora">[ blockchain math ]</span>
 
 Formula for transaction root:
 tx_root = ash24(TX1|TX2|TX3)

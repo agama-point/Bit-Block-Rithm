@@ -1,6 +1,6 @@
 <h3>Blockchain | Last 16 blocks</h3>
 
-<table class="tx-table blockchain-table">
+<table class="tab">
     <thead>
         <tr>
             <th>ID</th>
@@ -25,8 +25,8 @@
                 </a>
             </td>
 
-            <td class="hash-prev"><?= htmlspecialchars($row['prev_hash']) ?></td>
-            <td class="hash-root"><?= htmlspecialchars($row['tx_root']) ?></td>
+            <td class="hex"><?= htmlspecialchars($row['prev_hash']) ?></td>
+            <td class="hex"><?= htmlspecialchars($row['tx_root']) ?></td>
             <td class="val"><?= $row['nonce'] ?></td>
             <td><?= date('ymd | H:i', $row['timestamp']) ?></td>
 

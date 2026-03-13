@@ -18,6 +18,7 @@
 
 <div class="box2">
 <?php 
+   include "tool_ecc251add.php"; 
    include "demo_251sign.php"; 
    include "demo_251script.php"; ?>
 </div>

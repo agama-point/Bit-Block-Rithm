@@ -29,36 +29,24 @@ $sig_hex = $row['sig'] ?? '';
     <script src='js/ash24.js'></script>
     <script src='js/ess251.js?v=0.31'></script>
     <style>
-        body { background-color: #0a0a0a; color: #eee; font-family: 'Courier New', monospace; padding: 20px; font-size: 1em; margin: 0; overflow: hidden; }
-        
-        
-        .container { display: flex; gap: 20px; height: calc(100vh - 100px); }
-        
-        /* Left panel now has its own scrollbar if content overflows */
-        .left-panel { flex: 0 0 580px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 5px; }
-        .right-panel { flex: 1; display: flex; flex-direction: column; }
+   .container { display: flex; gap: 20px; height: calc(100vh - 100px); }
+   .left-panel { flex: 0 1 580px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 5px; }
+   .right-panel { flex: 1; display: flex; flex-direction: column; min-width: 350px;}
 
-        .data-box { background: #111; padding: 12px; border-radius: 4px; border: 1px solid #222; line-height: 1.4; margin-bottom: 10px; }
-        .val-hl { color: #00ccff; font-weight: bold; }
-        
-        .explain { background: #111; padding: 15px; border-radius: 5px; border: 1px solid #222; }
-        h3 { color: #00ff99; margin: 0 0 15px 0; font-size: 1em; text-transform: uppercase; }
 
-        .row { display: flex; align-items: center; margin-bottom: 8px; gap: 10px; }
-        .row label { width: 110px; color: #ccc; font-weight: bold; font-size: 1em; }
-        .row input { 
-            background: #1a1a1a; border: 1px solid #444; color: #00ff99; 
-            padding: 6px 10px; flex: 1; font-family: monospace; font-size: 1em; outline: none;
-        }
+   .data-box { background: #111; padding: 12px; border-radius: 4px; border: 1px solid #222; line-height: 1.4; margin-bottom: 10px; }
+   .val-hl { color: #00ccff; font-weight: bold; }
+   .explain { background: #111; padding: 15px; border-radius: 5px; border: 1px solid #222; }
+
+   .row { display: flex; align-items: center; margin-bottom: 8px; gap: 10px; }
+   .row label { width: 100px; color: #ccc; font-weight: bold; font-size: 0.9em; }
+   .row input { 
+    background: #1a1a1a; border: 1px solid #444; color: #00ff99; 
+    padding: 6px 10px; width: 125px; font-family: monospace; font-size: 1em; outline: none;
+}  
+        
         .row input:focus { border-color: #00ff99; }
-        .row .info { color: #aaa; font-size: 1em; min-width: 140px; }
-
-        #log { 
-            background: #000; color: #00ff41; padding: 15px; 
-            font-size: 1em; border-radius: 5px; border: 1px solid #333; 
-            white-space: pre-wrap; line-height: 1.4; flex-grow: 1; 
-            overflow-y: auto;
-        }
+        .row .info { color: #aaa; font-size: 0.8em; width: 100px; }        
         
         .btn-action { 
             background: #00ff99; color: #000; border: none; padding: 10px 20px; 
@@ -80,13 +68,28 @@ $sig_hex = $row['sig'] ?? '';
 <div class="container">
     <div class="left-panel">
         <div class="data-box">
-            TXID: <?= $row['txid'] ?> | Type: <?= (int)$row['mp'] === 0 ? "coinbase" : "mempool" ?><br>
-            From: <span class="val-hl"><?= htmlspecialchars($row['from_addr']) ?></span> | To: <span class="val-hl"><?= htmlspecialchars($row['to_addr']) ?></span><br>
-            In: <?= $row['val1'] ?> | Out: <?= $row['val2'] ?> | Change: <?= (int)$row['val1']-(int)$row['val2'] ?>
+
+<input type="hidden" id="val_in" value="<?= (int)$row['val1'] ?>">
+<input type="hidden" id="val_out" value="<?= (int)$row['val2'] ?>">
+<input type="hidden" id="val_change" value="<?= (int)$row['val1']-(int)$row['val2'] ?>">
+
+PREV_TXID: 
+<a href="show_tx.php?txid=<?= urlencode($row['prev_txid']) ?>">
+<strong><?= htmlspecialchars($row['prev_txid']) ?></strong></a>
+| 
+TXID: <?= $row['txid'] ?> 
+| Type: <?= empty($row['prev_txid']) ? "coinbase" : "P2PK" ?>
+<br>
+  
+            From: <span class="col_vio"><?= htmlspecialchars($row['from_addr']) ?></span> | To: <span class="col_vio"><?= htmlspecialchars($row['to_addr']) ?></span><br>
+            In: <?= $row['val1'] ?> | Out: <span class="col_gre"><?= $row['val2'] ?></span> | Change: <?= (int)$row['val1']-(int)$row['val2'] ?> | 
+<span class="col_gre"><?= date('ymd | H:i', $row['utxo_time']) ?></span>
+
+
         </div>
 
         <div class="explain">
-            <h3>1) Verify Section</h3>
+            <h3 class="col_ora">1) Verify Section</h3>
             <div class="row">
                 <label>Message</label>
                 <input type="text" id="in_msg" value="<?= htmlspecialchars($msg_payload) ?>">
@@ -100,14 +103,14 @@ $sig_hex = $row['sig'] ?? '';
             <div class="row">
                 <label>Signature</label>
                 <input type="text" id="in_sig" value="<?= htmlspecialchars($sig_hex) ?>">
-                <div id="res_rs" class="info"></div>
+                <div id="res_rs" class= "info"></div>
             </div>
             <button class="btn-action" onclick="doVerify()">Verify Signature</button>
             <span id="status_box"></span>
         </div>
 
         <div class="explain">
-            <h3>2) Sign Section</h3>
+            <h3 class="col_ora">2) Sign Section</h3>
             <div class="row">
                 <label>PrivKey</label>
                 <input type="number" id="in_priv" value="123">
@@ -127,9 +130,7 @@ $sig_hex = $row['sig'] ?? '';
                 <p>
                     This system utilizes <strong>ESS251</strong>, an educational "toy" Elliptic Curve Signature Scheme operating over the finite field $GF(251)$. 
                     Unlike standard ECDSA, this implementation is based on a simplified <strong>Schnorr-like signature</strong> logic.
-                </p>
-                
-                
+                </p>                
 
                 <p>
                     <strong>Deterministic Nonce:</strong> The nonce $k$ is derived as 
@@ -144,17 +145,24 @@ $sig_hex = $row['sig'] ?? '';
                 </p>
             </div>
         </div>
+ 
+   <br />
+   <hr />
+   <a href="tests_examples/simple_ecc251ec.html">tests_examples/simple_ecc251ec.html</a>
+   <a href="tests_examples/simple_ecc251add.html">tests_examples/simple_ecc251add.html</a>
+   <a href="https://github.com/agama-point/Bit-Block-Rithm/blob/main/toy_bbr/js/ess251.js">ess251.js</a>
+
     </div>
 
     <div class="right-panel">
-        <div id="log"></div>
+        <pre id="log" class="log"></pre>
     </div>
 </div>
 
 <script>
 function log(txt) { 
     let logEl = document.getElementById("log");
-    logEl.innerText += txt + "\n"; 
+    logEl.innerHTML += txt + "\n"; 
     logEl.scrollTop = logEl.scrollHeight; 
 }
 
@@ -181,57 +189,69 @@ function doVerify() {
     let sigHex = $("#in_sig").val();
 
     try {
-        let h_raw = ASH24(msg);
-        let pubPoint = hexa_to_point(addr);
-        let sParts = parseSig(sigHex);
+      let h_raw = ASH24(msg);
+      let h_hex = hex24(h_raw);
+      let pubPoint = hexa_to_point(addr);
+      let sParts = parseSig(sigHex);
 
-        let k_nonce = modN(h_raw ^ 0x55, ORDER_N);
-        if (k_nonce === 0) k_nonce = 1;
-        let R_point = scalar_mult(k_nonce, G_POINT);
-        let sigObj = { r: sParts.r, s: sParts.s, R_point: R_point };
+      let k_nonce = modN(h_raw ^ 0x55, ORDER_N);
+      if (k_nonce === 0) k_nonce = 1;
+      let R_point = scalar_mult(k_nonce, G_POINT);
+      let sigObj = { r: sParts.r, s: sParts.s, R_point: R_point };
+      let sigHex2 = sig_to_hexa(sigObj);
 
-        log("ESS251_VER: " + ESS251_VER);
-        log(` -> Curve: y^2 = x^3 + ${ECC_PARAMS.b} mod ${ECC_PARAMS.p} | [${ECC_PARAMS.G[0]}, ${ECC_PARAMS.G[1]}]`);
 
-        log("----- VERIFICATION PROCESS -----");
-        log("Message: " + msg);
-        log("h_raw: " + h_raw);
-        log("PubKey: [" + pubPoint + "]");
-        log("Signature (r,s): {" + sigObj.r + ", " + sigObj.s + "}");
-        log("Reconstructed R_point: [" + sigObj.R_point + "]");
-        log("");
-        log("Function: verifyToy(pub, h_raw, sig)");
+ log("ESS251_VER: " + ESS251_VER);
+ log(` -> Curve: y^2 = x^3 + ${ECC_PARAMS.b} mod ${ECC_PARAMS.p} | [${ECC_PARAMS.G[0]}, ${ECC_PARAMS.G[1]}]`);
 
-        let valid = verifyToy(pubPoint, h_raw, sigObj);
+ log("<span class='col_ora'>----- VERIFICATION PROCESS -----</span>");
+ log("scriptPubKey (Lock recipient UTXO): {pub:" + addr + ",op:OP_CHECKSIG}");
+ log("scriptSig (Unlock sender UTXO): {sig:" + sigHex2 + "}");
+ log("s * G = R + e * Q");
+ log("LEFT = scalar_mult(s, G_POINT)");
+ log("RIGHT = point_adding(R_point, e_Pub)");
+ log("---------  Balance:  ------------");
 
-        let e = modN(h_raw, ORDER_N);
-        log("Step 1: Challenge e = hash mod n = " + e);
+ let vin = $("#val_in").val();
+ let vout = $("#val_out").val();
+ let vchg = $("#val_change").val();
+ //log("  In: " + vin + " | Out: " + vout + " | Change: " + vchg);
+ log("  In    ⮕| " + vin + " | Out ⮕ <span class='col_ora'>" + vout + "</span>");
+ log(" Change ⬅| " + vchg + " |");
 
-        //let L = scalar_mult(sigObj.s, G_POINT).map(v => modN(v, P_MOD));
-        //let e_Pub = scalar_mult(e, pubPoint).map(v => modN(v, P_MOD));
-        //let P = point_adding(sigObj.R_point, e_Pub).map(v => modN(v, P_MOD));
+ log("--------------------------------");
+ log("Message: " + msg);
+ log("hash_raw: " + h_raw + " | hash_hex: " + h_hex);
+ log("<span class='col_ora'>PubKey:</span> "+ addr + " -> [<span class='col_ora'>" + pubPoint + "</span>]");
+ log("→ Signature (r,<span class='col_ora'>s</span>): {" + sigObj.r + ", <span class='col_ora'>" + sigObj.s + "</span>} " + sigHex2);
+ log("  <span class='col_ora'>R</span> (Nonce_point): [" + sigObj.R_point + "]");
+ log("→ Function: verifyToy(pub, h_raw, sig)");
 
-   const safeMap = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF (Point at Infinity)";
-   let L = scalar_mult(sigObj.s, G_POINT);
-   let e_Pub = scalar_mult(e, pubPoint);
-   let P = point_adding(sigObj.R_point, e_Pub);
-   // A při logování:
-   log("Step 2: L = s * G = " + safeMap(L));
-   log("Step 3: P = R + e * PubKey = " + safeMap(P));
+ let valid = verifyToy(pubPoint, h_raw, sigObj);
+ let e = modN(h_raw, ORDER_N);
+ log("Step 1: Challenge <span class='col_ora'>e</span> = hash mod n = <span class='col_ora'>" + e +"</span>");
 
-        //log("Step 2: L = s * G = [" + L + "]");
-        //log("Step 3: P = R + e * PubKey = [" + P + "]");
-        log("Output: valid = " + valid);
+ const safeMap = (pt) => pt ? `[${pt[0]}, ${pt[1]}]` : "INF (Point at Infinity)";
+ let L = scalar_mult(sigObj.s, G_POINT);
+ let e_Pub = scalar_mult(e, pubPoint);
+ let P = point_adding(sigObj.R_point, e_Pub);
+        
+ log("Step 2: <span class='col_ora'>LEFT = s * G</span> = " + safeMap(L));
+ log("  e: " + e + " | PubKey: " + pubPoint)
+ log("Step 3: <span class='col_ora'>RIGHT = R + e * PubKey</span> = " + safeMap(P));
+ log("⬅ [" + sigObj.R_point + "] + [" + e_Pub + "]");
 
-        if (valid) {
-            log("  => L == P  →  Signature is VALID ✅");
-            $("#status_box").html('<span class="status-badge ok">VALID ✅</span>');
-        } else {
-            log("  => L != P  →  Signature is INVALID ❌");
-            $("#status_box").html('<span class="status-badge bad">INVALID ❌</span>');
-        }
-        log("---------------------------------\n");
-    } catch(e) { log("!! Error: " + e.message); }
+ log("Output: valid = " + valid);
+
+ if (valid) {
+    log("  => LEFT == RIGHT  →  Signature is VALID ✅");
+     $("#status_box").html('<span class="status-badge ok">VALID ✅</span>');
+    } else {
+     log("  => LEFT != RIGHT  →  Signature is INVALID ❌");
+     $("#status_box").html('<span class="status-badge bad">INVALID ❌</span>');
+    }
+  log("---------------------------------\n");
+  } catch(e) { log("!! Error: " + e.message);}
 }
 
 function doSign() {
@@ -240,7 +260,11 @@ function doSign() {
     if (isNaN(priv)) { log("ERROR: Invalid Private Key."); return; }
 
     let h_raw = ASH24(msg);
-    log("----- SIGNING PROCESS -----");
+    log("<span class='col_ora'>-------- SIGNING PROCESS --------</span>");
+    log("Nonce | MODE = random | MODE = deterministic ⮕");
+    log("  k = (msg_hash ^ 0x55) % ORDER_N | <span class='col_ora'> k * G = R</span>");
+    log("s = k + e * <span class='col_ora'>q</span>  ⮕  s * G = k * G + e * <span class='col_ora'>q * G</span> ⮕  s * G = R + e * <span class='col_ora'>Q</span>");
+    log("Linear combination binds the signature to the private key");                    
     log("Message: " + msg + " | Hash: " + h_raw);
     
     let sigObj = signToy(priv, h_raw);
@@ -249,7 +273,7 @@ function doSign() {
     let newPubHex = pubkey_to_addr(newPubPoint);
     
     log("Result: r = " + sigObj.r + ", s = " + sigObj.s);
-    log("Hex Signature: " + sigHex);
+    log("Hex Signature: <span class='col_ora'>" + sigHex + "</span>");
     log("Derived PubKey Hex: " + newPubHex);
     log("---------------------------------\n");
 

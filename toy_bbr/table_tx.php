@@ -1,5 +1,5 @@
-<h3>Last 16 Transactions</h3>
-<table class="tx-table">
+<h3>Last 20 Transactions</h3>
+<table class="tab">
     <thead>
         <tr>
             <th>ID</th>
@@ -16,18 +16,22 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 16");
+        $res = $db->query("SELECT * FROM transactions ORDER BY id DESC LIMIT 20");
         while($row = $res->fetchArray(SQLITE3_ASSOC)): ?>
         <tr>
             <td><?= $row['id'] ?></td>
             
-         <td style="color:#0f0">
+         <td>
          <a href="show_tx.php?txid=<?= urlencode($row['txid']) ?>">
          <strong><?= htmlspecialchars($row['txid']) ?></strong></a></td>
 
-            <td class="addr"><?= $row['from_addr'] ?></td>
-            <td class="val"><?= $row['prev_txid'] ?></td>
-            <td class="addr"><?= $row['to_addr'] ?></td>
+            <td class="hex"><?= $row['from_addr'] ?></td>
+
+        <td>
+         <a href="show_tx.php?txid=<?= urlencode($row['prev_txid']) ?>">
+         <strong><?= htmlspecialchars($row['prev_txid']) ?></strong></a></td>
+
+            <td class="hex"><?= $row['to_addr'] ?></td>
             <td class="val"><?= $row['val1'] ?></td>
             <td class="val"><?= $row['val2'] ?></td>
             <td class="sig"><?= $row['sig']?></td>

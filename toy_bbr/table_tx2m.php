@@ -38,7 +38,7 @@ $lb_nonce  = $last_block ? $last_block['nonce'] : '99999';
 
 <h3>Last Transactions (mp = 1) | Mempool</h3>
 <form id="tx-form">
-<table class="tx-table">
+<table class="tab">
     <thead>
         <tr>
             <th>Select</th>
@@ -66,9 +66,9 @@ $lb_nonce  = $last_block ? $last_block['nonce'] : '99999';
                     <strong><?= htmlspecialchars($row['txid']) ?></strong>
                 </a>
             </td>
-            <td class="addr"><?= $row['from_addr'] ?></td>
+            <td class="hex"><?= $row['from_addr'] ?></td>
             <td class="val"><?= $row['prev_txid'] ?></td>
-            <td class="addr"><?= $row['to_addr'] ?></td>
+            <td class="hex"><?= $row['to_addr'] ?></td>
             <td class="val"><?= $row['val1'] ?></td>
             <td class="val"><?= $row['val2'] ?></td>
             <td class="sig"><?= $row['sig'] ?></td>

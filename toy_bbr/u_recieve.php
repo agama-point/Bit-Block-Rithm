@@ -11,10 +11,10 @@
         </div>
     <?php endif; ?>
 
-<div>
-    <p>Hex PubKey addres: <b><span id="myHexAddr"></span></b></p>
-    <p>Bech32__Toy address: <b><span id="myToy32Addr"></span></b></p>
-</div>
+<pre class="log">
+    Hex PubKey addres: <b><span id="myHexAddr"></span></b>
+    Bech32__Toy address: <b><span id="myToy32Addr"></span></b>
+</pre>
 
 <script>
 $(function(){

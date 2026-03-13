@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buttons with Icons</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <style>
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-icon img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .input-icon {
+            display: inline-flex;
+            align-items: center;
+        }
+        .input-icon img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .input-icon input {
+            flex: 1;
+        }
+        .btn-orange {
+            background-color: orange;
+            border-color: orange;
+            color: white;
+        }
+        .btn-orange:hover {
+            background-color: darkorange;
+            border-color: darkorange;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../js/qrcode.js"></script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between mb-3">
+        <a href="index.html" class="btn btn-orange btn-icon">
+            <img src="icon/house-door.svg" alt="Home Icon">
+            Home
+        </a>
+        <button class="btn btn-orange btn-icon">
+            <img src="icon/alarm.svg" alt="Alarm Icon">
+            Alarm
+        </button>
+        <button class="btn btn-orange btn-icon">
+            <img src="icon/link.svg" alt="Link Icon">
+            Link
+        </button>
+    </div>
+<hr>
+<br>
+    <div class="d-flex mb-3">
+        <div class="input-group input-icon">
+            <img src="icon/translate.svg" alt="Translate Icon">
+            <input type="text" id="input-box" class="form-control" placeholder="Enter text">
+        </div>
+        <button id="go-button" class="btn btn-orange ml-2">Go</button>
+        <button id="qr-button" class="btn btn-orange ml-2 btn-icon">
+            <img src="icon/qr-code.svg" alt="QR Code Icon">
+            QR
+        </button>
+    </div>
+
+    <div class="mb-3">
+        <label for="output">Output:</label>
+        <input type="text" id="output" class="form-control" readonly>
+    </div>
+
+    <div id="qr-code-container" class="mt-3"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#go-button').click(function() {
+            var inputText = $('#input-box').val();
+            $('#output').val(inputText);
+        });
+
+        $('#qr-button').click(function() {
+            var inputText = $('#input-box').val();
+            $('#qr-code-container').empty(); // Clear any previous QR code
+            var qrcode = new QRCode(document.getElementById("qr-code-container"), {
+                text: inputText,
+                width: 128,
+                height: 128
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

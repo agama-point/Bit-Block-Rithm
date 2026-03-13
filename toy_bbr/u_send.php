@@ -4,8 +4,6 @@ $current_k1 = $_SESSION['k1'] ?? null;
 
 <?php if ($current_k1): ?>
 
-<h1 class="digip">WALLET</h1>
-
 <div class="box1">
 <h3 class="col_ora">Send | Transfer funds to a destination address</h3>
 
@@ -15,7 +13,7 @@ $current_k1 = $_SESSION['k1'] ?? null;
 
   <input type="number" id="sendAmount" value="3" style="width:35px">
   <button id="sendBtn" style="color:#0f0; border-color:#0f0;">Send</button>
-
+  <br />
   <button type="button" class="addr-btn" data-addr="7214">A:7214</button>
   <button type="button" class="addr-btn" data-addr="83ca">B:83ca</button>
   <button type="button" class="addr-btn" data-addr="0aaf">C:0aaf</button>

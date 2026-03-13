@@ -26,7 +26,7 @@ if (!in_array($page, $allowed_pages)) {
     <meta charset="utf-8">
     <title>Wallet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/bbr.css?v=2">
+    <link rel="stylesheet" href="css/bbr.css?v=1">
     <script src="js/jquery.min.js"></script>
     <script src="js/agama_bech32.js"></script>
     <script src="js/ash24.js?v=0.11"></script>
@@ -44,13 +44,13 @@ if (!in_array($page, $allowed_pages)) {
 </script>
 
 <div class="header">
-  <div><b>B·B·R</b> | Bit·Block·Rithm | Don’t trust, verify. </div>
+  <div><b class="col_ora">B·B·R</b> | Bit·Block·Rithm | Don’t trust, verify. </div>
   <div>
     <button id="theme-toggle" style="padding: 2px 10px; cursor: pointer; vertical-align: middle; min-width: 80px;">
         </button>
     |
     <?php if(isset($_SESSION['nick'])): ?>
-      Logged in as <b><?= htmlspecialchars($_SESSION['nick']) ?></b> |
+      Logged in as <b class="col_ora"><?= htmlspecialchars($_SESSION['nick']) ?></b> |
       <a href="index.php?logout=1">Logout</a>
     <?php else: ?>
       <a href="create_acc.php">create account</a> |

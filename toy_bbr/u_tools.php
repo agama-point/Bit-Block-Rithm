@@ -9,8 +9,7 @@
         <button id="btn-addr2hex">ADDR &gt; HEX</button>
     </div>
 
-    <div id="tool-output" style="margin-top:15px; white-space: pre-wrap;"></div>
-
+    <div id="tool-output" class="log"></div>
 </div>
 
 <script>
@@ -64,7 +63,6 @@
                 log("Error converting ADDR -> HEX: " + e.message);
             }
         });
-
     });
 })();
 </script>

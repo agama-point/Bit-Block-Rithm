@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ECC Workshop & Dynamic Visualization</title>
+    <script src="../js/jquery.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .main-layout { display: flex; gap: 25px; max-width: 1300px; margin: auto; margin-bottom: 30px; }
+        
+        /* Left Column: Calculator */
+        .calc-wrapper { flex: 1; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        
+        /* Right Column: Table */
+        .table-wrapper { width: 220px; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); font-size: 0.8em; height: fit-content; }
+        .ref-table { border-collapse: collapse; width: 100%; }
+        .ref-table td { border-bottom: 1px dotted #ccc; padding: 4px 2px; font-family: 'Courier New', monospace; }
+        .ref-table tr:nth-child(even) { background: #fafafa; }
+        .ref-header { font-weight: bold; text-align: center; margin-bottom: 10px; color: #555; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+
+        .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px solid #eee; flex-wrap: wrap; }
+        input { width: 60px; padding: 8px; border: 2px solid #ddd; border-radius: 6px; font-weight: bold; text-align: center; }
+        button { padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 6px; border: none; transition: 0.2s; min-width: 130px; }
+        .btn-double { background-color: #28a745; color: white; }
+        .btn-add { background-color: #007bff; color: white; }
+        button:hover { filter: brightness(0.9); transform: translateY(-1px); }
+        
+        pre { background: #282c34; color: #abb2bf; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 0.95rem; border-left: 6px solid #007bff; line-height: 1.5; height: 300px; }
+        .math-b { color: #61afef; font-weight: bold; }
+        .res-b { color: #98c379; font-weight: bold; }
+        .err-b { color: #e06c75; font-weight: bold; }
+        h2 { margin-top: 0; color: #2c3e50; font-size: 1.4rem; }
+
+        /* Visualization Section */
+        #visualization-container {
+            max-width: 1300px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        .svg-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fdfdfd;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .svg-card h4 { margin-top: 0; color: #555; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        
+        /* Image Gallery Section (Black background, centered) */
+        .image-gallery { 
+            background-color: black; 
+            padding: 40px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 30px; 
+            border-radius: 12px;
+            max-width: 1300px;
+            margin: 30px auto;
+        }
+        .image-gallery img { 
+            width: 500px; 
+            height: auto; 
+            border: 1px solid #333; 
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-layout">
+    <div class="calc-wrapper">
+        <h2>ECC: y² = x³ + 7 (mod 17)</h2>
+
+        <div class="input-row">
+            <label style="min-width: 80px;">Point <b>I</b> [x,y]:</label>
+            <input type="number" id="ix" value="15">
+            <input type="number" id="iy" value="13">
+            <button id="btnDouble" class="btn-double">Double (I * 2)</button>
+        </div>
+
+        <div class="input-row">
+            <label style="min-width: 80px;">Point <b>J</b> [x,y]:</label>
+            <input type="number" id="jx" value="10">
+            <input type="number" id="jy" value="15">
+            <button id="btnAdd" class="btn-add">Add (I + J)</button>
+        </div>
+
+        <h3 style="margin-top: 20px;">Verbose Calculation Log:</h3>
+        <pre id="log">Perform an operation to see the step-by-step math...</pre>
+    </div>
+
+    <div class="table-wrapper">
+        <div class="ref-header">Multiples of G(15,13)</div>
+        <table class="ref-table" id="refTable">
+            </table>
+    </div>
+</div>
+
+<div id="visualization-container" style="display:none;">
+    <h3>Dynamic SVG Visualization</h3>
+    
+    <div class="svg-card" id="svg-grid-card">
+        <h4>1. GF(17) Point Grid</h4>
+        </div>
+
+    <div class="svg-card" id="svg-geometry-card">
+        <h4>2. Geometric Construction (mod 17)</h4>
+        </div>
+</div>
+
+
+<div class="image-gallery">
+    <a href="multi_inv.html"><img src="inv_mod17.png" alt="Inversion Modulo 17">multi_inv</a>
+    <a href="simple_ecc.html"><img src="jumps_mod17.png" alt="Jumps Modulo 17">simple_ecc</a>
+
+</div>
+
+<script>
+    const P = 17, A = 0, B = 7;
+    const G = [15, 13];
+
+    // Pre-calculate all points on the curve y^2 = x^3 + 7 mod 17
+    const allCurvePoints = [];
+    function precalculatePoints() {
+        for (let x = 0; x < P; x++) {
+            let rhs = modN(x * x * x + B, P);
+            for (let y = 0; y < P; y++) {
+                if (modN(y * y, P) === rhs) {
+                    allCurvePoints.push([x, y]);
+                }
+            }
+        }
+    }
+
+    function modN(n, m) { return ((n % m) + m) % m; }
+    
+    function inv_mod(x, mod_val) {
+        x = modN(x, mod_val);
+        for (let i = 1; i < mod_val; i++) {
+            if (modN(x * i, mod_val) === 1) return i;
+        }
+        return null;
+    }
+
+    // Reference table generation logic
+    function getNextStep(x1, y1, x2, y2) {
+        let num, den;
+        if (x1 === x2 && y1 === y2) {
+            num = modN(3 * x1 * x1 + A, P);
+            den = modN(2 * y1, P);
+        } else {
+            num = modN(y2 - y1, P);
+            den = modN(x2 - x1, P);
+        }
+        let inv = inv_mod(den, P);
+        if (inv === null) return null;
+        let s = modN(num * inv, P);
+        let x3 = modN(s * s - x1 - x2, P);
+        let y3 = modN(s * (x1 - x3) - y1, P);
+        return [x3, y3];
+    }
+
+    function buildTable() {
+        let current = [...G];
+        let rows = `<tr><td>1G</td><td>(15, 13)</td></tr>`;
+        for (let i = 2; i <= 18; i++) {
+            let next = getNextStep(G[0], G[1], current[0], current[1]);
+            if (!next) {
+                rows += `<tr><td>${i}G</td><td><small>Infinity (O)</small></td></tr>`;
+                break;
+            }
+            rows += `<tr><td>${i}G</td><td>(${next[0]}, ${next[1]})</td></tr>`;
+            current = next;
+        }
+        $("#refTable").html(rows);
+    }
+
+    function writeLog(txt) { $("#log").append(txt + "\n"); }
+
+    // --- SVG VISUALIZATION GENERATORS ---
+
+    function generateGridSVG(pI, pJ, pResult) {
+        const cellSize = 25;
+        const margin = 30;
+        const width = P * cellSize + 2 * margin;
+        const height = P * cellSize + 2 * margin;
+        
+        let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="background:white; border-radius:8px;">`;
+        
+        // Axes and Grid
+        for (let i = 0; i <= P; i++) {
+            let pos = margin + i * cellSize;
+            // Vert lines
+            svg += `<line x1="${pos}" y1="${margin}" x2="${pos}" y2="${height-margin}" stroke="#eee" stroke-width="1"/>`;
+            // Horiz lines
+            svg += `<line x1="${margin}" y1="${pos}" x2="${width-margin}" y2="${pos}" stroke="#eee" stroke-width="1"/>`;
+            
+            // Labels (y-axis is flipped in SVG, we handle it by referencing from bottom)
+            if (i < P) {
+                svg += `<text x="${margin - 10}" y="${height - margin - i * cellSize + 5}" font-size="12" text-anchor="end">${i}</text>`; // Y labels
+                svg += `<text x="${margin + i * cellSize}" y="${height - margin + 15}" font-size="12" text-anchor="middle">${i}</text>`; // X labels
+            }
+        }
+        svg += `<text x="${width/2}" y="${height-5}" font-size="14" font-weight="bold" text-anchor="middle">x mod 17</text>`;
+        svg += `<text x="10" y="${height/2}" font-size="14" font-weight="bold" text-anchor="middle" transform="rotate(-90 10 ${height/2})">y mod 17</text>`;
+
+        // Plot ALL curve points (Blue)
+        allCurvePoints.forEach(pt => {
+            let cx = margin + pt[0] * cellSize;
+            let cy = height - margin - pt[1] * cellSize;
+            svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#61afef" opacity="0.6"/>`;
+        });
+
+        // Plot Input Points
+        if (pI) {
+            svg += `<circle cx="${margin + pI[0] * cellSize}" cy="${height - margin - pI[1] * cellSize}" r="6" fill="#e06c75" stroke="black" stroke-width="2"><title>Point I</title></circle>`;
+        }
+        if (pJ && (pI[0]!==pJ[0] || pI[1]!==pJ[1])) {
+            svg += `<circle cx="${margin + pJ[0] * cellSize}" cy="${height - margin - pJ[1] * cellSize}" r="6" fill="#e5c07b" stroke="black" stroke-width="2"><title>Point J</title></circle>`;
+        }
+
+        // Plot Result (Green)
+        if (pResult) {
+            svg += `<circle cx="${margin + pResult[0] * cellSize}" cy="${height - margin - pResult[1] * cellSize}" r="7" fill="#98c379" stroke="black" stroke-width="2"><title>Result</title></circle>`;
+        }
+
+        svg += `</svg>`;
+        $("#svg-grid-card svg").remove();
+        $("#svg-grid-card").append(svg);
+    }
+
+    function generateGeometrySVG(pI, pJ, pResult, slope, type) {
+        const width = 600;
+        const height = 400;
+        const margin = 50;
+        const cellW = (width - 2*margin) / P;
+        const cellH = (height - 2*margin) / P;
+
+        let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="background:#282c34; border-radius:8px; color:#abb2bf;">`;
+        
+        // Helper: get SVG coordinates from GF(17) coordinates
+        const getX = (x) => margin + x * cellW;
+        const getY = (y) => height - margin - y * cellH; // Flip Y for SVG
+
+        // Title and Equation check
+        svg += `<text x="${width/2}" y="25" fill="#abb2bf" font-size="16" font-weight="bold" text-anchor="middle">Geometric Construction of ${type === 'doubling' ? '2*I' : 'I+J'}</text>`;
+        svg += `<text x="${width/2}" y="45" fill="#98c379" font-size="12" text-anchor="middle">Result: [${pResult[0]}, ${pResult[1]}] (checks y² ≡ x³+7 ≡ ${modN(pResult[1]*pResult[1],P)})</text>`;
+
+        // Grid (subtle)
+        for (let i = 0; i <= P; i++) {
+            svg += `<line x1="${getX(i)}" y1="${getY(0)}" x2="${getX(i)}" y2="${getY(P)}" stroke="#3e4451" stroke-width="0.5"/>`;
+            svg += `<line x1="${getX(0)}" y1="${getY(i)}" x2="${getX(P)}" y2="${getY(i)}" stroke="#3e4451" stroke-width="0.5"/>`;
+        }
+
+        if (type === 'doubling') {
+            // Point Doubling Geometry
+            let x1 = pI[0], y1 = pI[1];
+            // Plot Tangent Point I
+            svg += `<circle cx="${getX(x1)}" cy="${getY(y1)}" r="6" fill="#e06c75" stroke="white"><title>Point I [${x1},${y1}]</title></circle>`;
+            svg += `<text x="${getX(x1)+10}" y="${getY(y1)-10}" fill="#e06c75" font-size="12">I</text>`;
+
+            // Draw fiktivní 'tečna' (Line y = s(x-x1)+y1 mod P)
+            // Pro tečnu v mod G, s=7 prochází bodem (15,13). Rovnice: y = 7(x-15)+13.
+            // Tato přímka protne křivku v mod 17 v bodě (2, 7).
+            let xIntersect = pResult[0]; // x3 je stejné pro průsečík i výsledek
+            let yIntersect = modN(slope * (xIntersect - x1) + y1, P); // Fiktivní y souřadnice průsečíku
+
+            // Draw line segment from I to Intersection
+            svg += `<line x1="${getX(x1)}" y1="${getY(y1)}" x2="${getX(xIntersect)}" y2="${getY(yIntersect)}" stroke="#e06c75" stroke-width="2" stroke-dasharray="5,5"/>`;
+            
+            // Plot Intersection point (faded green)
+            svg += `<circle cx="${getX(xIntersect)}" cy="${getY(yIntersect)}" r="5" fill="#98c379" opacity="0.5"><title>Intersection [${xIntersect},${yIntersect}]</title></circle>`;
+            
+            // Draw reflection line (vertical)
+            svg += `<line x1="${getX(xIntersect)}" y1="${getY(yIntersect)}" x2="${getX(pResult[0])}" y2="${getY(pResult[1])}" stroke="#569cd6" stroke-width="1"/>`;
+            
+            // Plot Final Result (Green)
+            svg += `<circle cx="${getX(pResult[0])}" cy="${getY(pResult[1])}" r="7" fill="#98c379" stroke="white" stroke-width="2"><title>Result [${pResult[0]},${pResult[1]}]</title></circle>`;
+            svg += `<text x="${getX(pResult[0])+12}" y="${getY(pResult[1])+5}" fill="#98c379" font-size="14" font-weight="bold">2I</text>`;
+
+        } else {
+            // Point Addition Geometry (I + J)
+            // Plot Points I and J
+            svg += `<circle cx="${getX(pI[0])}" cy="${getY(pI[1])}" r="6" fill="#e06c75" stroke="white"><title>Point I</title></circle>`;
+            svg += `<circle cx="${getX(pJ[0])}" cy="${getY(pJ[1])}" r="6" fill="#e5c07b" stroke="white"><title>Point J</title></circle>`;
+            
+            // Draw Line I-J (y = s(x-x1)+y1 mod P)
+            // Tato přímka protne křivku v bodě -R (zrcadlení výsledku)
+            let yNegR = modN(pResult[1] === 0 ? 0 : P - pResult[1], P);
+            let xIntersect = pResult[0];
+
+            svg += `<line x1="${getX(pI[0])}" y1="${getY(pI[1])}" x2="${getX(pJ[0])}" y2="${getY(pJ[1])}" stroke="#abb2bf" stroke-width="2"/>`;
+            // Extend line to intersection
+            svg += `<line x1="${getX(pJ[0])}" y1="${getY(pJ[1])}" x2="${getX(xIntersect)}" y2="${getY(yNegR)}" stroke="#abb2bf" stroke-width="2" stroke-dasharray="3,3"/>`;
+
+            // Plot Intersection point (-R)
+            svg += `<circle cx="${getX(xIntersect)}" cy="${getY(yNegR)}" r="5" fill="#98c379" opacity="0.5"><title>Intersection (-R)</title></circle>`;
+            
+            // Draw reflection line
+            svg += `<line x1="${getX(xIntersect)}" y1="${getY(yNegR)}" x2="${getX(pResult[0])}" y2="${getY(pResult[1])}" stroke="#569cd6" stroke-width="1"/>`;
+            
+            // Plot Final Result (R)
+            svg += `<circle cx="${getX(pResult[0])}" cy="${getY(pResult[1])}" r="7" fill="#98c379" stroke="white" stroke-width="2"><title>Result R</title></circle>`;
+            svg += `<text x="${getX(pResult[0])+12}" y="${getY(pResult[1])+5}" fill="#98c379" font-size="14" font-weight="bold">R</text>`;
+        }
+
+        svg += `</svg>`;
+        $("#svg-geometry-card svg").remove();
+        $("#svg-geometry-card").append(svg);
+    }
+
+
+    function calculate(mode) {
+        $("#log").empty();
+        let x1 = parseInt($("#ix").val()), y1 = parseInt($("#iy").val());
+        let x2 = parseInt($("#jx").val()), y2 = parseInt($("#jy").val());
+
+        writeLog(`<span class="math-b">=== DETAILED ECC LOG (Finite Field GF(${P})) ===</span>`);
+
+        let num, den, s, type;
+        if (mode === 'double' || (x1 === x2 && y1 === y2)) {
+            type = "doubling";
+            writeLog(`Operation: <b class="math-b">Point Doubling</b> [${x1}, ${y1}]`);
+            writeLog(`Formula: s = (3*x1² + a) / (2*y1) mod ${P}`);
+            num = modN(3 * x1 * x1 + A, P);
+            den = modN(2 * y1, P);
+            writeLog(`  -> Numerator: (3 * ${x1}² + ${A}) mod ${P} = ${num}`);
+            writeLog(`  -> Denominator: (2 * ${y1}) mod ${P} = ${den}`);
+        } else if (x1 === x2) {
+            writeLog(`<span class="err-b">Result: Point at Infinity (O)</span>`);
+            writeLog(`Reason: x-coordinates are equal (${x1}), but points are not identical. Line is vertical.`);
+            $("#visualization-container").hide();
+            return;
+        } else {
+            type = "addition";
+            writeLog(`Operation: <b class="math-b">Point Addition</b> [${x1}, ${y1}] + [${x2}, ${y2}]`);
+            writeLog(`Formula: s = (y2 - y1) / (x2 - x1) mod ${P}`);
+            num = modN(y2 - y1, P);
+            den = modN(x2 - x1, P);
+            writeLog(`  -> Numerator: (${y2} - ${y1}) mod ${P} = ${num}`);
+            writeLog(`  -> Denominator: (${x2} - ${x1}) mod ${P} = ${den}`);
+        }
+
+        let inv = inv_mod(den, P);
+        if (inv === null) {
+            writeLog(`<span class="err-b">  Error: Denominator ${den} has no inverse mod ${P}.</span>`);
+            $("#visualization-container").hide();
+            return;
+        }
+        writeLog(`  -> Modular inverse of ${den} mod ${P} is ${inv}`);
+        
+        s = modN(num * inv, P);
+        writeLog(`  -> <b class="math-b">Slope (s)</b> = (${num} * ${inv}) mod ${P} = <b class="res-b">${s}</b>`);
+
+        writeLog(`\n<b>Coordinate Calculation:</b>`);
+        let x3, y3;
+        if (type === "doubling") {
+            x3 = modN(s * s - 2 * x1, P);
+            writeLog(`  x3 = (s² - 2*x1) mod ${P} = (${s}² - 2*${x1}) mod ${P} = <b class="res-b">${x3}</b>`);
+        } else {
+            x3 = modN(s * s - x1 - x2, P);
+            writeLog(`  x3 = (s² - x1 - x2) mod ${P} = (${s}² - ${x1} - ${x2}) mod ${P} = <b class="res-b">${x3}</b>`);
+        }
+
+        y3 = modN(s * (x1 - x3) - y1, P);
+        writeLog(`  y3 = (s*(x1 - x3) - y1) mod ${P} = (${s}*(${x1}-${x3}) - ${y1}) mod ${P} = <b class="res-b">${y3}</b>`);
+
+        writeLog(`\n<span class="res-b">FINAL RESULT: [${x3}, ${y3}]</span>`);
+
+        // --- Update Visualization ---
+        $("#visualization-container").show();
+        generateGridSVG([x1, y1], [x2, y2], [x3, y3]);
+        generateGeometrySVG([x1, y1], [x2, y2], [x3, y3], s, type);
+
+        // Update inputs if doubling
+        if (mode === 'double') {
+            $("#ix").val(x3); $("#iy").val(y3);
+        }
+    }
+
+    $(document).ready(function() {
+        precalculatePoints();
+        buildTable();
+        $("#btnDouble").click(() => calculate('double'));
+        $("#btnAdd").click(() => calculate('add'));
+    });
+</script>
+
+</body>
+</html>

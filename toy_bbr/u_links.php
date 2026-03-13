@@ -24,8 +24,11 @@ include "basic_info.php";
 <a href="tests_examples/simple_ecc.html">simple_ecc</a> * jumps for different mod<br/> 
 <a href="tests_examples/test_donut.html">donut</a> * test_donut<br/>
 <br />
-ECC251<br />
+ECC17 | ESS251<br />
 <a href="tests_examples/simple_ecc251ec.html">tests_examples/simple_ecc251ec</a> jumps on curve 251 <br/>
+<a href="tests_examples/simple_ecc17add.html">tests_examples/simple_ecc17add.html</a> op. on curve 17 <br/>
+<a href="tests_examples/simple_ecc251script.html">tests_examples/simple_ecc251script.html</a> P2PK script <br/> 
+
 ASH24<br />
 <a href="tests_examples/test_ash24.html">test_ash24</a> hash24<br/>
 <a href="tests_examples/demo_24mining.html">demo_24mining</a> ash24 fast mining<br/>

@@ -5,7 +5,7 @@ $db = new SQLite3(__DIR__ . "/main.db");
 $current_k1 = $_SESSION['k1'] ?? null;
 $nick = $_SESSION['nick'] ?? 'Guest';
 ?>
-
+<div class = "box2">
 <div class="utxo-container">
     <h3>Your Unspent Coins (UTXO)</h3>
     <p>
@@ -13,7 +13,7 @@ $nick = $_SESSION['nick'] ?? 'Guest';
        My address: <span id="my-wallet-addr" class="wallet-addr">deriving...</span>
     </p>
 
-    <table class="tx-table utxo-table">
+    <table class="tab">
         <thead>
             <tr>
                 <th>ID</th>
@@ -35,10 +35,10 @@ $nick = $_SESSION['nick'] ?? 'Guest';
                 $status_label = $row['spent'] ? 'SPENT' : 'UNSPENT';
 
                 echo "<tr class='utxo-row $spent_class' data-owner='{$row['owner']}' style='display:none;'>";
-                echo "<td>{$row['id']}</td>";
+                echo "<td class="">{$row['id']}</td>";
                 echo "<td>{$row['txid']}</td>";
-                echo "<td><code>{$row['owner']}</code></td>";
-                echo "<td><b>{$row['value']}</b></td>";
+                echo "<td class='hex'>{$row['owner']}</td>";
+                echo "<td class='val'><b>{$row['value']}</b></td>";
                 echo "<td class='status'>$status_label</td>";
                 echo "</tr>";
             }
@@ -82,3 +82,5 @@ $(function() {
     }
 });
 </script>
+</div>
+</br>

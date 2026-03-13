@@ -2,7 +2,7 @@
 session_start();
 
 /* ===== NASTAVENÍ ===== */
-$ADMIN_PASSWORD = 'ssb22';
+$ADMIN_PASSWORD = 'test26';
 
 /* ===== ODHLAŠENÍ ===== */
 if (isset($_GET['logout'])) {
@@ -93,13 +93,6 @@ $is_admin = !empty($_SESSION['admin']);
 <a href="test_sign251_16.html">test_sign251_16.html</a> podepsání a ověření - loop 16x<br/>
 <a href="test_tx.php">test_tx</a> první tx flow<br/> 
 <a href="tx_playground.php">tx_playground.php</a>ab / ba<br/>
-
-
-
-
- 
- 
-
 
       
 <?php 

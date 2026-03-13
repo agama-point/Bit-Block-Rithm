@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ESS251 calculator</title>
+
+<script src="../js/jquery.min.js"></script>
+<script src="../js/ess251.js"></script>
+
+<link rel="stylesheet" href="../css/bbr.css">
+
+</head>
+<body>
+
+
+<div class="container">
+<div class="content">
+
+<div class="panel">
+
+<h3>ESS251 calculator</h3>
+
+Curve:
+y² = x³ + 7 (mod 251)
+
+<hr>
+
+
+<div class="box1">
+
+G:
+
+x:
+<input id="gx">
+
+y:
+<input id="gy">
+
+</div>
+
+
+<br>
+
+
+<div class="box1">
+
+k * G
+
+<br>
+
+k:
+<input id="k" value="2">
+
+<button id="btnMul">k × G</button>
+
+</div>
+
+
+<br>
+
+
+<div class="box1">
+
+P:
+
+x:
+<input id="px">
+
+y:
+<input id="py">
+
+<br><br>
+
+Q:
+
+x:
+<input id="qx">
+
+y:
+<input id="qy">
+
+<br><br>
+
+<button id="btnAdd">P + Q</button>
+
+</div>
+
+
+<div id="out" class="log"></div>
+
+
+</div>
+</div>
+</div>
+
+
+
+<script>
+
+
+
+function log(t)
+{
+    $("#out").append(t + "\n");
+}
+
+function clearLog()
+{
+    $("#out").text("");
+}
+
+
+
+function fmt(P)
+{
+    if(P===null) return "O";
+    return "["+P[0]+","+P[1]+"]";
+}
+
+
+
+$(function(){
+
+    let G = ECC_PARAMS.G;
+
+    $("#gx").val(G[0]);
+    $("#gy").val(G[1]);
+
+    $("#px").val(G[0]);
+    $("#py").val(G[1]);
+
+    $("#qx").val(G[0]);
+    $("#qy").val(G[1]);
+
+
+
+    // ---------- k * G ----------
+
+    $("#btnMul").click(function(){
+
+        clearLog();
+
+        let k = parseInt($("#k").val());
+
+        let G = [
+            parseInt($("#gx").val()),
+            parseInt($("#gy").val())
+        ];
+
+        log("k = " + k);
+        log("G = " + fmt(G));
+
+        let R = scalar_mult(
+            k,
+            G,
+            ECC_PARAMS.a,
+            ECC_PARAMS.p,
+            ECC_PARAMS.n
+        );
+
+        log("Result = " + fmt(R));
+
+    });
+
+
+
+    // ---------- P + Q ----------
+
+    $("#btnAdd").click(function(){
+
+        clearLog();
+
+        let P = [
+            parseInt($("#px").val()),
+            parseInt($("#py").val())
+        ];
+
+        let Q = [
+            parseInt($("#qx").val()),
+            parseInt($("#qy").val())
+        ];
+
+        log("P = " + fmt(P));
+        log("Q = " + fmt(Q));
+
+        let R = point_adding(
+            P,
+            Q,
+            ECC_PARAMS.p,
+            ECC_PARAMS.a
+        );
+
+        log("Result = " + fmt(R));
+
+    });
+
+
+});
+
+
+</script>
+
+</body>
+</html>
