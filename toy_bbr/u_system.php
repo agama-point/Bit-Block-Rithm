@@ -2,17 +2,17 @@
 
 <div class="flex-wrap">
 <div class="flex-left">
-   <div class="panel">
+   
    <?php 
    include "tool_ash24.php"; ?>
-   </div>
+   
 </div>
 
 <div class="flex-right">
-   <div class="panel">
+  
    <?php 
    include "tool_ash32.php"; ?>
-   </div>
+  
 </div>
 </div>
 
@@ -25,17 +25,17 @@
 
 <div class="flex-wrap">
 <div class="flex-left">
-   <div class="panel">
+   <div class="box1">
    <?php 
    include "table_utxo_all.php";  ?>
    </div>
 </div>
 
 <div class="flex-right">
-   <div class="panel">
+   
    <?php 
    include "show_sys.php";?>
-   </div>
+   
 </div>
 </div>
 

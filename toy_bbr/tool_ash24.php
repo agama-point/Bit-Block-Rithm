@@ -4,12 +4,12 @@
     <input type="text" id="tool-input" maxlength="63" style="width:300px; font-family:monospace;" placeholder="Enter hex or data" />
 
     <div style="margin-top:10px;">
-        <button id="btn-hash24">HASH24</button>
+        <button id="btn-hash24" class="ui-btn">HASH24</button>
         <button id="btn-hex2addr">HEX &gt; ADDR</button>
         <button id="btn-addr2hex">ADDR &gt; HEX</button>
     </div>
 
-    <div id="tool-output" class="log"></div>
+    <pre id="tool-output" class="log"></pre>
 
 </div>
 

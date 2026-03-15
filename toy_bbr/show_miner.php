@@ -1,9 +1,11 @@
 <?php
 $currentDelay = $_SESSION['minerdelay'] ?? 5; 
 ?>
-
+<div class="box1">
 <h3 class="col_gre">MINER DEBUG</h3>
 <pre id="log-system" class="log"></pre>
+
+</div>
 
 <script>
 (function() {

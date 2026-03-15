@@ -4,11 +4,11 @@
     <input type="text" id="tool-input2" maxlength="63" style="width:300px; font-family:monospace;" placeholder="Enter hex or data" />
 
     <div style="margin-top:10px;">
-        <button id="btn-hash32">HASH32</button>
+        <button id="btn-hash32" class="ui-btn">HASH32</button>
         <button id="btn-hex2addrx"> ... </button>        
     </div>
 
-    <div id="tool-output2" class="log"></div>
+    <pre id="tool-output2" class="log"></pre>
 </div>
 
 <script>

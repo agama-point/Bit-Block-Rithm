@@ -26,7 +26,7 @@ if (!in_array($page, $allowed_pages)) {
     <meta charset="utf-8">
     <title>Wallet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/bbr.css?v=1">
+    <link rel="stylesheet" href="css/bbr.css?v=1.5">
     <script src="js/jquery.min.js"></script>
     <script src="js/agama_bech32.js"></script>
     <script src="js/ash24.js?v=0.11"></script>

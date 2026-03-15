@@ -1,4 +1,3 @@
-<br />
 <div class="box2">
 <h3 class="col_gre">SYS. DEBUG</h3>
 <pre id="log-system" class="log"></pre>

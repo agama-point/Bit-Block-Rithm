@@ -1,4 +1,4 @@
-<h3>Blockchain | Last 16 blocks</h3>
+<h3>Blockchain | Last 30 blocks</h3>
 
 <table class="tab">
     <thead>
@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM blockchain ORDER BY id_block DESC LIMIT 16");
+        $res = $db->query("SELECT * FROM blockchain ORDER BY id_block DESC LIMIT 30");
         while($row = $res->fetchArray(SQLITE3_ASSOC)):
         ?>
         <tr>

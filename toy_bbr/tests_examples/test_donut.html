@@ -2,18 +2,15 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" type="text/css" href="../css/bbr.css?v=1">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>AgamaPoint | ecc</title>
-<style>
-bodyx{
-    background-color: #000;
-    color: #fff;
-    height: 100vh;
-    overflow: hidden;
-}
 
+<link rel="stylesheet" type="text/css" href="../css/bbr.css?v=1">
+
+
+<style>
 pre.donut{
     background-color: #000;
     font-family: monospace;
@@ -23,6 +20,7 @@ pre.donut{
     line-height: 0.9;
 }
 
+
 .donut-container{
     background-color: #000;
     display: flex;
@@ -30,18 +28,31 @@ pre.donut{
     justify-content: center;
     height: 100%;
 }
+
 </style>
+
 </head>
 
 
 <body>
+<script>
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); }
+</script>
+
+
+
+<div class="box1">
+:.:
+</div>
+
 <div class="container">
     <h1 class="digip">Test "DONUT" | Toroid</h1>
 
-<div class="donut-container">
- <pre class="donut" id="donut"></pre>
- <script src="../js/donut2.js"></script>
- </div>
-
+    <div class="donut-container">
+        <pre class="donut" id="donut"></pre>
+        <script src="../js/donut2.js"></script>
+    </div>
 </div>
 
+</body>
+</html>

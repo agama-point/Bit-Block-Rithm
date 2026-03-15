@@ -41,10 +41,7 @@ try {
     <script src="js/agama_bech32.js"></script>
     <script src="js/ash24.js"></script>
     <style>
-        body { font-family: 'Courier New', monospace; background:#111; color:#0f0; padding: 20px; line-height: 1.5; }
-        .container { max-width: 1000px; margin: 0 auto; }
         
-        /* Navigační řada */
 .block-navigation { 
     display: flex; 
     align-items: stretch; 
@@ -54,8 +51,6 @@ try {
 }
 
 .block-info { 
-    background: #002200; 
-    border: 1px solid #0f0; 
     padding: 10px; 
     box-sizing: border-box;
     /* Odstraněno display: flex a justify-content, aby se text mohl roztáhnout */
@@ -82,7 +77,7 @@ try {
 .nav-arrow { 
     display: flex; 
     align-items: center; 
-    color: #0f0; 
+    color: var(--color-gre);
     font-weight: bold; 
     font-size: 2em; 
     padding: 0 5px; 
@@ -93,23 +88,16 @@ try {
 .info-line {
     display: block;
     white-space: nowrap; /* Zabrání zalomení uvnitř popisků, pokud je dost místa */
-}
-
-
-        /* Tabulka detailu */
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; background: #181818; }
-        td { padding: 12px; border: 1px solid #333; }
-        td:first-child { width: 220px; font-weight: bold; color: #fff; background: #222; }
-        
-        .hash-val { color: #0ff; word-break: break-all; }
-        .num-val { color: #ff0; }
-        .block-link { color: #0f0; text-decoration: none; display: block; height: 100%; width: 100%; padding-top: 15px; }
-        .block-link:hover { background: #0f0; color: #000; }
-        .dim { color: #444; font-size: 0.8em; }
+}  
         
     </style>
+
 </head>
+
 <body>
+<script>
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); }
+</script>
 
 <div class="container">
     <h1 class="digip">Block Explorer</h1>
@@ -122,7 +110,7 @@ try {
     <?php else: ?>
         
         <div class="block-navigation">
-            <div class="block-info side-block">
+            <div class="box2 block-info side-block">
                 <?php if ($id_block > 1): ?>
                     <a href="show_block.php?id=<?= $id_block - 1 ?>" class="block-link">#[-1]</a>
                 <?php else: ?>
@@ -132,7 +120,7 @@ try {
 
             <div class="nav-arrow">&rarr;</div>
 
-            <div class="block-info main-prev-info">
+            <div class="box1 block-info main-prev-info">
                 <?php if ($prev_block): 
                     $raw_header = $prev_block['id_block'] . '|' . 
                                   $prev_block['prev_hash'] . '|' . 
@@ -141,14 +129,14 @@ try {
                                   ($prev_block['nonce'] ?: 'NULL');
                 ?>
                     <strong>Previous block: Header #<?= $prev_block['id_block'] ?></strong> | 
-                    PrevHash: <span class="hash-val"><?= $prev_block['prev_hash'] ?></span> | 
+                    PrevHash: <span class="col_vio"><?= $prev_block['prev_hash'] ?></span> | 
                     Time: <span class="num-val"><?= $prev_block['timestamp'] ?></span><br />
-                    TX_Root: <span class="hash-val"><?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?></span> | 
-                    Nonce: <span class="num-val"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?></span>
+                    TX_Root: <span class="col_vio"><?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?></span> | 
+                    Nonce: <span class="col_gre"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?></span>
                     
                     <div class="raw-data-box">
-                        :.: <span id="header-to-hash"><?= htmlspecialchars($raw_header) ?></span> 
-                        &rarr; <span id="real-time-hash" class="hash-val">...</span>
+                        :.: <span class="col_gre" id="header-to-hash"><?= htmlspecialchars($raw_header) ?></span> 
+                        &rarr; <span id="real-time-hash" class="col_vio">...</span>
                     </div>
                 <?php else: ?>
                     <div style="text-align:center;" class="dim">GENESIS BLOCK: NO PARENT HEADER DATA</div>
@@ -157,30 +145,36 @@ try {
 
             <div class="nav-arrow">&rarr;</div>
 
-            <div class="block-info side-block">
+            <div class="box2 block-info side-block">
                 <a href="show_block.php?id=<?= $id_block + 1 ?>" class="block-link">#[+1]</a>
             </div>
         </div> 
 
         <h2>Block details #<?= $block['id_block'] ?></h2>
-
-        <table>
+<div class="box2">
+        <table class="tab">
             <tr><td>Block ID</td><td class="num-val"><?= $block['id_block'] ?></td></tr>
-            <tr><td>Prev Hash (from Parent) :.:</td><td class="hash-val"><?= htmlspecialchars($block['prev_hash'] ?: '0000000000000000') ?></td></tr>
+            <tr class="col_vio"><td>Prev Hash (from Parent) :.:</td>
+<td class="col_vio"><?= htmlspecialchars($block['prev_hash'] ?: '0000000000000000') ?></td></tr>
             
-            <tr class="num-val"><td>Nonce</td><td><?= $block['nonce'] ?></td></tr>
+            <tr class="col_gre"><td>Nonce</td><td><?= $block['nonce'] ?></td></tr>
             <tr>
                 <td>Timestamp</td>
-                <td class="num-val">
+                <td class="col_gre">
                     <?= $block['timestamp'] ?> 
                     <span style="color:#777; margin-left:10px;">(<?= date("Y-m-d H:i:s", $block['timestamp']) ?>)</span>
                 </td>
             </tr>
             <tr><td>Transactions (IDs)</td><td style="color:#aaa; font-size:0.9em;"><?= htmlspecialchars($block['tx_txt']) ?></td></tr>
-            <tr><td>TX Root</td><td class="hash-val"><?= htmlspecialchars($block['tx_root']) ?></td></tr>
-            <tr><td>Block Note</td><td><?= htmlspecialchars($block['note_block']) ?></td></tr>
-            <tr><td>K (parameter)</td><td><?= htmlspecialchars($block['k']) ?></td></tr>
+            <tr><td>TX Root</td>
+<td class="col_vio"><?= htmlspecialchars($block['tx_root']) ?></td></tr>
+            <tr>
+<td>Block Note</td><td><?= htmlspecialchars($block['note_block']) ?></td></tr>
+            <tr><td>K (parameter)</td>
+<td><?= htmlspecialchars($block['k']) ?></td></tr>
         </table>
+</div>
+
 
     <?php endif; ?>
 

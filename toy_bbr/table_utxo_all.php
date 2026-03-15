@@ -1,6 +1,5 @@
-<hr />
 <h3>Balance Summary by Owner:</h3>
-<table class="tx-table">
+<table class="tab">
     <thead>
         <tr>
             <th>Owner</th>
@@ -26,7 +25,7 @@
 </table>
 
 <hr />
-<h3>Last 10 UTXOs (Coins in Circulation):</h3>
+<h3>Last 30 UTXOs (Coins in Circulation):</h3>
 <table class="tab">
     <thead>
         <tr>
@@ -39,11 +38,12 @@
     </thead>
     <tbody>
         <?php
-        $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 10");
+        $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 30");
         while($row = $res->fetchArray(SQLITE3_ASSOC)): ?>
         <tr class="spent-<?= $row['spent'] ? 'true' : 'false' ?>">
             <td><?= $row['id'] ?></td>
-            <td><?= $row['txid'] ?></td>
+
+            <td><a href="show_tx.php?txid=<?= urlencode($row['txid']) ?>"><?= htmlspecialchars($row['txid']) ?></a></td>
             <td class="addr"><?= $row['owner']?></td>
             <td class="val"><?= $row['value'] ?></td>
             <td><?= $row['spent'] ? 'Spent' : 'Available' ?></td>

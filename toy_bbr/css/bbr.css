@@ -5,6 +5,7 @@
   --bg: #000;
   --bg2: #1a1a1a; /* Tmavě šedá pro řádky/tabulky */
   --text: LightGray;
+  --text-inv: Black;
   --text2: Orange;
   --color-log: Lime;
   --panel-bg: #000;
@@ -13,14 +14,16 @@
   --panel-border: #777;
   --header-bg: #222;
   --button-bg: #222;
-  --input-bg: #000;
-  --input-text: #fff;
+  --input-bg: #333;
+  --input-text: White;
   --link-hover: #fff;
 
   --color-gre: Lime;
   --color-ora: Orange;
   --color-sil: Silver;
   --color-vio: Violet;
+  --color-vio-inv: #808;
+
 }
 
 /* Light Mode */
@@ -28,6 +31,7 @@ body.light-mode {
   --bg: #f5f5f5;
   --bg2: #e0e0e0; 
   --text: #222;
+  --text-inv: White;
   --text2: #d35400; 
   --color-log: black;
   --panel-bg: #eee;
@@ -36,14 +40,15 @@ body.light-mode {
   --panel-border: #333;
   --header-bg: #ddd;
   --button-bg: #eee;
-  --input-bg: #fff;
-  --input-text: #000;
+  --input-bg: #eee;
+  --input-text: Black;
   --link-hover: #000;
 
   --color-gre: #06402B; 
   --color-ora: #d35400;
   --color-sil: #353E43;
   --color-vio: #808;
+  --color-vio-inv: Violet;
 }
 
 
@@ -69,13 +74,13 @@ body {
 }
 
 /* Pomocné barvy - ponechány fixní, pokud jsou vyloženě sémantické */
-.col_whi { color: var(--input-text); }
-.col_red { color: red; }
-.col_ora { color: var(--color-ora); }
-.col_sil { color: var(--color-sil); }
-.col_gre { color: var(--color-gre); }
-.col_vio { color: var(--color-vio); }
-.col_yel { color: yellow; }
+.col_whi { color: var(--input-text) !important; }
+.col_red { color: red !important; }
+.col_ora { color: var(--color-ora) !important; }
+.col_sil { color: var(--color-sil) !important; }
+.col_gre { color: var(--color-gre) !important; }
+.col_vio { color: var(--color-vio) !important; }
+.col_yel { color: yellow !important;; }
 
 /* --- KOMPONENTY --- */
 
@@ -153,31 +158,6 @@ a:hover { color: var(--link-hover); }
 
 .box1 { background-color: var(--panel-bg); }
 .box2 { background-color: var(--panel2-bg); }
-
-
-
-/* --- FORMULÁŘE A TLAČÍTKA --- */
-
-input {
-  background-color: var(--input-bg);
-  color: var(--input-text);
-  border: 1px solid var(--panel-border);
-  padding: 5px;
-}
-
-button {
-  background: var(--button-bg);
-  color: var(--text);
-  border: 1px solid var(--panel-border);
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-button:hover {
-  border-color: var(--text2);
-  color: var(--text2);
-}
 
 /* --- LOGY A TERMINÁL --- */
 
@@ -257,6 +237,102 @@ pre {
 }
 
 
+/* === Form BASE === */
+.ui-input {
+    box-sizing: border-box;
+    height: 32px;
+    padding: 4px 11px;
+    font-size: 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.ui-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220,38,38,0.2);
+}
+
+.ui-btn {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #dc2626;
+    background: #dc2626;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ui-btn:hover {
+    background: #e8524d;
+    border-color: #e8524d;
+}
+
+.ui-btn:active {
+    background: #b5161b;
+    border-color: #b5161b;
+}
+
+
+input {
+  margin-top: 6px;
+  /*background-color: var(--input-bg);*/
+  background-color: color-mix(in srgb, var(--input-bg) 80%, white);
+
+  color: var(--input-text);
+  border-radius: 5px;
+  border: 2px solid var(--panel-border);
+  padding: 8px;
+}
+
+
+button, .addr-btn {
+  margin-top: 6px;
+  background: var(--button-bg);
+  color: var(--text);
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  border-color: var(--text2);
+  color: var(--text2);
+}
+
+
+/* === color BUTTON BASE === */
+.btn_sil, .btn_vio, .btn_gre  {
+    margin-top: 6px;
+    display: inline-block;
+    min-width: 95px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    cursor: pointer;
+
+    background-color: var(--color-sil);
+    color: var(--text);
+
+    text-align: center;
+    transition: background-color 0.2s ease, filter 0.2s ease;
+}
+
+.btn_sil { background-color: var(--color-sil); }
+.btn_vio { background-color: var(--color-vio-inv); }
+.btn_gre { background-color: var(--color-gre); }
+
+/* === HOVER === */
+.btn_sil:hover, .btn_gre:hover, .btn_vio:hover {
+    background-color: color-mix(in srgb, var(--btn-color) 70%, white);
+}
+
+
 /* --- ============= table ============== --- */
 .hex { color: var(--color-vio) !important; }
 .val { color: var(--input-text) !important; }
@@ -265,37 +341,36 @@ pre {
 .spent-false { color: #0f0; }
 
 
-
 .tab {
   width: 100%;
-  border-collapse: collapse;   /* změna */
-  margin: 20px 0;
+  border-collapse: collapse;   
+  margin: 12px 0;
   background-color: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border-radius: 5px;
   overflow: hidden;
 
   font-family: 'Courier New', monospace;
-  font-size: 1rem; 
+  font-size: 0.9rem; 
 }
 
 .tab th, .tab td {
-  font-family: inherit;
-  font-size: inherit;
-  border: 1px solid var(--panel-border);   /* přidá svislé čáry */
+  /*font-family: inherit;*/
+  /*font-size: inherit;*/
+  border: 1px solid var(--panel-border);   
 }
 
 .tab th {
   background-color: var(--bg2);
   color: var(--text);
-  padding: 12px 15px;
+  padding: 5px;
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .tab td {
-  padding: 10px 15px;
+  padding: 5px;
   color: var(--text);
   transition: background 0.2s;
 }

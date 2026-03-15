@@ -9,14 +9,14 @@ $current_k1 = $_SESSION['k1'] ?? null;
 
 <div style="display:flex; align-items:center; gap:20px;">
   <div>
- <input type="text" id="targetAddr" placeholder="Recipient address (e.g., e875)" style="width:150px; height:30px;">
+ <input type="text" id="targetAddr" placeholder="Recipient address (e.g., e875)" style="width:100px;">
 
   <input type="number" id="sendAmount" value="3" style="width:35px">
-  <button id="sendBtn" style="color:#0f0; border-color:#0f0;">Send</button>
+  <button id="sendBtn" class="ui-btn">Send</button>
   <br />
-  <button type="button" class="addr-btn" data-addr="7214">A:7214</button>
-  <button type="button" class="addr-btn" data-addr="83ca">B:83ca</button>
-  <button type="button" class="addr-btn" data-addr="0aaf">C:0aaf</button>
+  <button type="button" class="addr-btn" data-addr="7214">→ A:7214</button>
+  <button type="button" class="addr-btn" data-addr="83ca">→ B:83ca</button>
+  <button type="button" class="addr-btn" data-addr="0aaf">→ C:0aaf</button>
 
   <div id="addrError" style="color: #ff3333; margin-top: 5px; display: none;">
     Invalid format! Use lowercase hex (0-9, a-f) only.
@@ -25,7 +25,7 @@ $current_k1 = $_SESSION['k1'] ?? null;
   
 </div>
 <div style="display:flex; align-items:center; gap:20px;">
-    <pre id="walletLog" style="height:150px; overflow:auto; margin-top:10px; border-left: 2px solid #0f0; padding-left:10px;"></pre>
+    <pre id="walletLog" class="log"></pre>
     <div id="qr-code-container"></div>
 </div>
 </div>

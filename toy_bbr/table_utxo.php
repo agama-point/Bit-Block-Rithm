@@ -14,18 +14,18 @@ $nick = $_SESSION['nick'] ?? 'Guest';
     </p>
 
     <table class="tab">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>TXID</th>
-                <th>Owner (Addr)</th>
-                <th>Value</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="utxo-table-body">
-            <?php
-            $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 30");
+    <thead>
+       <tr>
+          <th>ID</th>
+          <th>TXID</th>
+          <th>Owner (Addr)</th>
+          <th>Value</th>
+          <th>Status</th>
+        </tr>
+     </thead>
+     <tbody id="utxo-table-body">
+     <?php
+            $res = $db->query("SELECT * FROM utxo ORDER BY id DESC LIMIT 70");
             $found_any = false;
 
             while($row = $res->fetchArray(SQLITE3_ASSOC)){
@@ -35,8 +35,12 @@ $nick = $_SESSION['nick'] ?? 'Guest';
                 $status_label = $row['spent'] ? 'SPENT' : 'UNSPENT';
 
                 echo "<tr class='utxo-row $spent_class' data-owner='{$row['owner']}' style='display:none;'>";
-                echo "<td class="">{$row['id']}</td>";
-                echo "<td>{$row['txid']}</td>";
+                echo "<td>{$row['id']}</td>";
+                //echo "<td>{$row['txid']}</td>";
+$txid = htmlspecialchars($row['txid']);
+$link = urlencode($row['txid']);
+echo "<td><a href=\"show_tx.php?txid=$link\">$txid</a></td>";
+
                 echo "<td class='hex'>{$row['owner']}</td>";
                 echo "<td class='val'><b>{$row['value']}</b></td>";
                 echo "<td class='status'>$status_label</td>";

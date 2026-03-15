@@ -1,20 +1,20 @@
-<br />
 <div class="box1">
-<h3 class="col_ora">Receive | Accept assets to your personal address</h3> 
-  
+<h3 class="col_ora">Receive | Accept assets to your personal address</h3>  
 
     <?php if (!$current_k1): ?>
         <p>To use the wallet, you must set a private key in the <b>Keys</b> section.</p>
     <?php else: ?>
         <div class="box2">
             PubKey | Address: <span id="myFullAddr">...</span>
-        </div>
+        
     <?php endif; ?>
 
 <pre class="log">
     Hex PubKey addres: <b><span id="myHexAddr"></span></b>
     Bech32__Toy address: <b><span id="myToy32Addr"></span></b>
 </pre>
+</div>
+
 
 <script>
 $(function(){
