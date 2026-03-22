@@ -1,4 +1,4 @@
-<h3>Last 20 Transactions</h3>
+<h3 class="col1">Last 20 Transactions</h3>
 <table class="tab">
     <thead>
         <tr>

@@ -1,5 +1,5 @@
-<h1 class="digip">WALLET</h1>
-
+<h1 class="digip col3">WALLET</h1>
+<div class="grad_line"></div>
 
 <div class="flex-wrap">
 <div class="flex-left">

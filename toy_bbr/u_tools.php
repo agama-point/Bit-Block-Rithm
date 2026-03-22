@@ -1,15 +1,22 @@
-<div style="background:#000;color:#0f0;padding:10px;margin:20px 0;font-family:monospace;border:1px solid #0f0;">
-    <h3>TOOLS</h3>
+<div class="box1">
+
+    <h3 class="col_ora">TOOLS | AGAMA SIMPLE HASH 24 bit</h3>
 
     <input type="text" id="tool-input" maxlength="60" style="width:250px; font-family:monospace;" placeholder="Enter hex or data" />
 
     <div style="margin-top:10px;">
-        <button id="btn-hash24">HASH24</button>
+        <button class="ui-btn" id="btn-hash24">HASH24</button>
         <button id="btn-hex2addr">HEX &gt; ADDR</button>
         <button id="btn-addr2hex">ADDR &gt; HEX</button>
     </div>
 
     <div id="tool-output" class="log"></div>
+
+<ul class="ul-links">
+<li><a href="tests_examples/ash24_visual.html">ash24_visual 
+<span>→ hashing process</span></a></li>
+</ul>
+
 </div>
 
 <script>

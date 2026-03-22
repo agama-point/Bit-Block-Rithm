@@ -18,16 +18,13 @@
         .ui-panel {
             padding: 20px;
             border-radius: 8px;
-            /*border: 1px solid #333;*/
             border: 1px solid var(--panel-border);
             margin-bottom: 20px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         input[type="text"] {
-            /*background: #000;*/
             border: 1px solid #00ff41;
-            /*color: #00ff41;*/
             padding: 10px;
             width: 250px;
             font-size: 16px;
@@ -57,9 +54,10 @@
         
         #canvas-wrapper {
             margin-top: 10px;
-            border: 1px solid #444;
-            max-height: 65vh;
             overflow-y: auto;
+            /* Centrování uvnitř flex-right */
+            display: flex;
+            justify-content: center;
         }
         .hash-output {
             margin-top: 20px;
@@ -67,6 +65,43 @@
             font-weight: bold;
         }
         .version { font-size: 12px; color: #666; margin-top: 5px; }
+
+        /* Styly pro Technical Info */
+        .tech-info {
+            width: 320px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            overflow: hidden;
+            text-align: left;
+        }
+        .tech-header {
+            background: #252525;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            color: #00ff41;
+        }
+        .tech-content {
+            padding: 15px;
+            color: #ccc;
+            line-height: 1.4;
+            display: none;
+        }
+        .formula {
+            background: #000;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            color: #00ff41;
+            font-size: 12px;
+        }
+        .tech-content b { color: #fff; }
     </style>
 </head>
 <body>
@@ -74,7 +109,8 @@
     if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); }
 </script>
 
-<div class="box2 box_c">
+<div class="box2 box_cx">
+
     <div class="ui-panel">
         <h1 class="digip">ASH24 visual</h1>
         <h3 class="col_ora">Agama Simple Hash 24 bit | Bitwise Visualizer</h3> 
@@ -96,111 +132,80 @@
             <button id="hashAmp"> @ </button>
             <button class="ui-btn" id="hashBtn"> RUN HASH </button>
         </div>
-       
+        
+               
         <div class="version" id="verInfo"></div>
     </div>
 
-    <div id="canvas-wrapper"></div>
+    <div class="flex-wrap">
+        <div class="flex-left box1">
+              
+<pre class = "log"> 
+const IV8 = [0x6a, 0xbb, 0x3c, 0xa5, 0x51, 0x9b, 0x05, 0x1f];
+let A = useIV ? IV8[0] : 0;
+let B = useIV ? IV8[1] : 0;
+let C = useIV ? IV8[2] : 0;
+...
 
-    <div class="hash-output">
-        RESULT: <span id="finalHash" style="color: #fff;">000000</span>
-    </div>
+A ^= m0;
+B ^= m1;
+C ^= (m0 + m1) & 0xFF;
 
+for (let i = 0; i < 16; i++) {
+     A ^= IV8[(i + blockIndex) % IV8.length];
+     B ^= rol8(C, 2);
+     C ^= rol8(A, 3);
+     A = (A + C) & 0xFF;
 
+     A ^= B;
+     B ^= C;
+     C ^= A;
 
-<style>
-    .tech-info {
-        width: 320px;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 8px;
-        margin-top: 20px;
-        font-size: 13px;
-        overflow: hidden;
-    }
-    .tech-header {
-        background: #252525;
-        padding: 10px;
-        cursor: pointer;
-        font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        color: #00ff41;
-    }
-    .tech-content {
-        padding: 15px;
-        color: #ccc;
-        line-height: 1.4;
-        display: none; /* Skryté v základu */
-    }
-    .formula {
-        background: #000;
-        padding: 8px;
-        border-radius: 4px;
-        margin: 10px 0;
-        font-family: 'Courier New', monospace;
-        color: #00ff41;
-        font-size: 12px;
-    }
-    .tech-content b { color: #fff; }
-</style>
-
-<div class="tech-info">
-    <div class="tech-header" onclick="$('.tech-content').slideToggle();">
-        <span>TECHNICAL ARCHITECTURE</span>
-        <span>▼</span>
-    </div>
-    <div class="tech-content">
-        <b>Merkle-Damgård Construction</b><br>
-        Iterative processing of variable input into a fixed 24-bit state.
-        
-        <div class="formula">
-            1. XOR (&oplus;): Data injection<br>
-            2. ROL (&lll;): Bit diffusion<br>
-            3. ADD (+): Modular carry logic
+     [A, B, C] = [B, C, A];
+...
+</pre>
+  
+            <div class="tech-info">
+                <div class="tech-header" onclick="$('.tech-content').slideToggle();">
+                    <span>TECHNICAL ARCHITECTURE</span>
+                    <span>▼</span>
+                </div>
+                <div class="tech-content">
+                    <b>Merkle-Damgård Construction</b><br>
+                    Iterative processing of variable input into a fixed 24-bit state.
+                    <div class="formula">
+                        1. XOR (&oplus;): Data injection<br>
+                        2. ROL (&lll;): Bit diffusion<br>
+                        3. ADD (+): Modular carry logic
+                    </div>
+                    <b>Round Transformation:</b>
+                    <div class="formula">
+                        B = B &oplus; (C &lll; 2)<br>
+                        C = C &oplus; (A &lll; 3)<br>
+                        A = (A + C) mod 256
+                    </div>
+                    <b>Avalanche Effect:</b>
+                    Registers swap $[A,B,C] \to [B,C,A]$ every round. Combined with <b>Padding</b> (0x80 + length), a 1-bit change cascades across the entire 24-bit space.
+                </div>
+            </div>
         </div>
 
-        <b>Round Transformation:</b>
-        <div class="formula">
-            B = B &oplus; (C &lll; 2)<br>
-            C = C &oplus; (A &lll; 3)<br>
-            A = (A + C) mod 256
+        <div class="flex-right box1">
+            <div id="canvas-wrapper"></div>
+
+            <div class="hash-output" style="text-align: center;">
+                RESULT: <span id="finalHash" style="color: #800000;">000000</span>
+            </div>
         </div>
-        
-        <b>Avalanche Effect:</b>
-        Registers swap $[A,B,C] \to [B,C,A]$ every round. Combined with <b>Padding</b> (0x80 + length), a 1-bit change cascades across the entire 24-bit space.
-        
-        
     </div>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-    <script>
-    /**
-     * ASH24 - Agama Simple Hash 24-bit
-     */
+<script>
     const ASH24_VER = "0.19 | 2026/03";
 
     $(document).ready(function() {
         $('#verInfo').text("Ver: " + ASH24_VER);
 
-        // Obsluha preset tlačítek
         $('#hashMiner').click(function() {
             $('#userInput').val('AGAMA151418');
             startHashing();
@@ -233,10 +238,10 @@
             if (data.length % 2 !== 0) data.push(0x00);
         }
 
-        const IV8 = [0x6a, 0xbb, 0x3c, 0xa5, 0x51, 0x9b, 0x05, 0x1f];
-        let A = useIV ? IV8[0] : 0;
-        let B = useIV ? IV8[1] : 0;
-        let C = useIV ? IV8[2] : 0;
+        const IV8 = useIV ? [0x6a, 0xbb, 0x3c, 0xa5, 0x51, 0x9b, 0x05, 0x1f] : Array(8).fill(0);
+	let A = IV8[0];
+	let B = IV8[1];
+	let C = IV8[2];
 
         let history = []; 
 
@@ -278,7 +283,7 @@
     function setup() {
         let c = createCanvas(250, 400);
         c.parent('canvas-wrapper');
-        frameRate(20); // Mírně zrychleno pro lepší flow
+        frameRate(30); // 20 na 30
         startHashing(); 
     }
 
@@ -298,7 +303,16 @@
     }
 
     function draw() {
-        background(15);
+        const isLight = document.body.classList.contains('light-mode');
+        
+        // Barvy pro Light Mode vs Dark Mode
+        const bgColor = isLight ? 204 : 15; // #ccc vs #0f
+        const bitOnColor = isLight ? [128, 0, 0] : [0, 255, 65]; // maroon vs green
+        const bitOffColor = isLight ? 180 : 30; // tmavší šedá v light vs tmavě šedá v dark
+        const textColor = isLight ? 50 : 100;
+        const labelColor = isLight ? [128, 0, 0] : [0, 255, 65];
+
+        background(bgColor);
         
         const bitSize = 5;
         const bitGap = 1;
@@ -308,7 +322,7 @@
         const startY = 30;
 
         if (currentShown > 0) {
-            fill(100); noStroke(); textSize(10); textAlign(CENTER);
+            fill(textColor); noStroke(); textSize(10); textAlign(CENTER);
             text("REG A", startX + 20, 20);
             text("REG B", startX + 20 + 48 + regGap, 20);
             text("REG C", startX + 20 + 2 * (48 + regGap), 20);
@@ -319,7 +333,7 @@
             let y = startY + i * (bitSize + rowGap);
             let regs = [state.a, state.b, state.c];
 
-            fill(state.label === "INIT" ? "#00ff41" : 60);
+            fill(state.label === "INIT" ? labelColor : (isLight ? 100 : 60));
             textSize(7);
             textAlign(RIGHT, CENTER);
             text(state.label, startX - 10, y + bitSize/2);
@@ -329,26 +343,26 @@
                 let xOff = startX + r * (8 * (bitSize + bitGap) + regGap);
                 for (let b = 0; b < 8; b++) {
                     let bit = (val >> (7 - b)) & 1;
-                    fill(bit === 1 ? [0, 255, 65] : 30);
+                    fill(bit === 1 ? bitOnColor : bitOffColor);
                     noStroke();
                     rect(xOff + b * (bitSize + bitGap), y, bitSize, bitSize);
                 }
             }
 
             if (state.label === "R16") {
-                stroke(50);
+                stroke(isLight ? 150 : 50);
                 line(startX - 15, y + bitSize + 1, width - 20, y + bitSize + 1);
             }
         }
 
         if (currentShown < rounds.length) {
             currentShown++;
-            $('#finalHash').text("MIXING...").css('color', '#888');
+            $('#finalHash').text("MIXING...").css('color', isLight ? '#666' : '#888');
         } else {
-            $('#finalHash').text(finalResultStr.toUpperCase()).css('color', '#ffa500');
+            $('#finalHash').text(finalResultStr.toUpperCase()).css('color', isLight ? '#800000' : '#ffa500');
             noLoop();
         }
     }
-    </script>
+</script>
 </body>
 </html>

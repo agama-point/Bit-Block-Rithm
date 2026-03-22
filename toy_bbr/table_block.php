@@ -1,15 +1,15 @@
-<h3>Blockchain | Last 30 blocks</h3>
+<h3 class="col1">Blockchain | Last 30 blocks</h3>
 
 <table class="tab">
     <thead>
         <tr>
             <th>ID</th>
-            <th>Prev Hash</th>
-            <th>TX Root</th>
+            <th>Prev_Hash</th>
+            <th>TX_Root</th>
             <th>Nonce</th>
             <th>Timestamp</th>
-            <th>TX Text</th>
-            <th>TX Note</th>
+            <th>TX_Data (transactions)</th>
+            <th>TX_Note</th>
             <th>k</th>
         </tr>
     </thead>

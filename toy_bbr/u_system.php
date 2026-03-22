@@ -1,18 +1,15 @@
-<h1 class="digip">SYSTEM | TOOLS</h1>
+<h1 class="digip col3">SYSTEM | TOOLS</h1>
+<div class="grad_line"></div>
 
 <div class="flex-wrap">
-<div class="flex-left">
-   
+<div class="flex-left">   
    <?php 
-   include "tool_ash24.php"; ?>
-   
+   include "tool_ash24.php"; ?>   
 </div>
 
-<div class="flex-right">
-  
+<div class="flex-right">  
    <?php 
-   include "tool_ash32.php"; ?>
-  
+   include "tool_ash32.php"; ?>  
 </div>
 </div>
 
@@ -22,6 +19,7 @@
    include "demo_251sign.php"; 
    include "demo_251script.php"; ?>
 </div>
+<br />
 
 <div class="flex-wrap">
 <div class="flex-left">
@@ -40,5 +38,6 @@
 </div>
 
 <?php 
+//include "chart_tx.php";
 include "db_info.php"; 
 ?>

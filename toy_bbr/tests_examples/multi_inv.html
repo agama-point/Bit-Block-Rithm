@@ -1,25 +1,42 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8">
-  <title>Modular inverse</title>
-  <link rel="stylesheet" type="text/css" href="../css/bbr.css?v=1">
-  <link rel="stylesheet" type="text/css" href="../css/dark.css">
-  <script src="../js/p5.min.js"></script>
-  <style>
-    body { font-family: sans-serif; }
-  </style>
+    <meta charset="utf-8">
+    <title>Modular inverse</title>
+    <link rel="stylesheet" type="text/css" href="../css/bbr.css?v=1">
+    <link rel="stylesheet" type="text/css" href="../css/dark.css">
+    <script src="../js/p5.min.js"></script>    
 </head>
 <body>
-<div class="container">
-    <h1 class="digip">Modular inverse</h1>
 
-<div>
-We compute the multiplicative inverse <span class="col_yel">modulo <i>n</i></span>.<br />
-This means - find a number <span class="col_yel"><i>x</i></span>
- such that <span class="col_yel"> <i>a · x</i> ≡ 1 (mod <i>n</i>)</span><br />
-Therefore,
-<span class="col_yel"><i>a</i><sup>−1</sup> ≡ <i>x</i> (mod <i>n</i>)</span>
+<script>
+    // Inicializace tématu před vykreslením body
+    if (localStorage.getItem('theme') === 'light') { 
+        document.body.classList.add('light-mode'); 
+    }
+</script>
+
+<div class="box2">
+    <div class="container">
+        <h1 class="digip">Modular inverse</h1>
+        <div class="col_txt">
+            We compute the multiplicative inverse <span class="col_yel">modulo <i>n</i></span>.<br />
+            This means - find a number <span class="col_yel"><i>x</i></span>
+            such that <span class="col_ora"> <i>a · x</i> ≡ 1 (mod <i>n</i>)</span><br />
+            Therefore, <span class="col_ora"><i>a</i><sup>−1</sup> ≡ <i>x</i> (mod <i>n</i>)</span>
+        </div>
+<br />
+<br />
+        <div class="flex-wrap">
+            <div class="flex-left box2 w300 col_txt" id="ui-container">
+                <h3>Controls</h3>
+                <p>Adjust the value of <i>n</i> using the slider below.</p>
+                </div>
+
+            <div class="flex-right" id="canvas-container">
+                </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -27,132 +44,151 @@ let slider;
 let primesCheckbox;
 let primes = [];
 
-/* test prvočísla */
 function isPrime(n) {
-  if (n < 2) return false;
-  for (let i = 2; i * i <= n; i++) {
-    if (n % i === 0) return false;
-  }
-  return true;
+    if (n < 2) return false;
+    for (let i = 2; i * i <= n; i++) {
+        if (n % i === 0) return false;
+    }
+    return true;
 }
 
-/* seznam prvočísel < 100 */
 function buildPrimes() {
-  for (let i = 2; i < 256; i++) {
-    if (isPrime(i)) primes.push(i);
-  }
+    for (let i = 2; i < 256; i++) {
+        if (isPrime(i)) primes.push(i);
+    }
 }
 
-/* rychlé umocňování modulo */
 function modPow(base, exp, mod) {
-  let result = 1;
-  base %= mod;
-  while (exp > 0) {
-    if (exp & 1) result = (result * base) % mod;
-    base = (base * base) % mod;
-    exp >>= 1;
-  }
-  return result;
+    let result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
 }
 
 function setup() {
-  createCanvas(350, 350);
-  angleMode(RADIANS);
+    // Vytvoření plátna a jeho umístění do pravého divu
+    const cnv = createCanvas(350, 350);
+    cnv.parent('canvas-container');
+    
+    angleMode(RADIANS);
+    buildPrimes();
 
-  buildPrimes();
+    // Vytvoření ovládacích prvků a jejich umístění do levého divu
+    slider = createSlider(2, 256, 7, 1);
+    slider.parent('ui-container');
+    slider.style('width', '60%');
 
-  slider = createSlider(2, 256, 7, 1);
-  slider.position(10, height + 10);
-
-  primesCheckbox = createCheckbox(' primes', false);
-  primesCheckbox.position(160, height + 8);
+    primesCheckbox = createCheckbox(' Primes only', false);
+    primesCheckbox.parent('ui-container');
 }
 
 function draw() {
-  ///background(255);
-  background(32);
+    // Detekce režimu
+    const isLight = document.body.classList.contains('light-mode');
+    
+    // Nastavení barev podle režimu
+    const bgColor = isLight ? 255 : 32;
+    const mainColor = isLight ? color(0, 128, 0) : color(0, 255, 0);
+    const circleColor = isLight ? 200 : 128;
+    const textColor = isLight ? 50 : 200;
 
-  // omezení na prvočísla
-  if (primesCheckbox.checked()) {
-    let v = slider.value();
-    if (!isPrime(v)) {
-      // najdi nejbližší vyšší prvočíslo
-      for (let p of primes) {
-        if (p >= v) {
-          slider.value(p);
-          break;
+    background(bgColor);
+
+    // Omezení na prvočísla
+    if (primesCheckbox.checked()) {
+        let v = slider.value();
+        if (!isPrime(v)) {
+            for (let p of primes) {
+                if (p >= v) {
+                    slider.value(p);
+                    break;
+                }
+            }
         }
-      }
     }
-  }
 
-  const p = slider.value();
-  const cx = width / 2;
-  const cy = height / 2;
-  const r = 130;
-  const tickLen = 10;
+    const p = slider.value();
+    const cx = width / 2;
+    const cy = height / 2;
+    const r = 130;
+    const tickLen = 10;
 
-  //stroke(0);
-  stroke(128);
-  noFill();
-  circle(cx, cy, 2 * r);
+    // Hlavní kružnice
+    stroke(circleColor);
+    noFill();
+    circle(cx, cy, 2 * r);
 
-  textAlign(CENTER, CENTER);
-  textSize(10);
+    textAlign(CENTER, CENTER);
+    textSize(10);
 
-  let pos = [];
-  for (let n = 0; n < p; n++) {
-    const a = -HALF_PI + n * TWO_PI / p;
-    pos[n] = {
-      x: cx + r * cos(a),
-      y: cy + r * sin(a),
-      a: a
-    };
-  }
-
-  // spojnice inverzí
-  stroke(0, 250,0);
-  for (let n = 1; n < p; n++) {
-    const inv = modPow(n, p - 2, p);
-    if ((n * inv) % p === 1 && n < inv) {
-      line(pos[n].x, pos[n].y, pos[inv].x, pos[inv].y);
+    let pos = [];
+    for (let n = 0; n < p; n++) {
+        const a = -HALF_PI + n * TWO_PI / p;
+        pos[n] = {
+            x: cx + r * cos(a),
+            y: cy + r * sin(a),
+            a: a
+        };
     }
-  }
 
-  // čárky, čísla, neexistující inverze
-  for (let n = 0; n < p; n++) {
-    const { x, y, a } = pos[n];
+    // Spojnice inverzí
+    stroke(mainColor);
+    strokeWeight(1);
+    for (let n = 1; n < p; n++) {
+        // Výpočet inverze: pro prvočísla p-2, pro složená čísla hledáme bruteforce (pro vizualizaci stačí)
+        let inv = -1;
+        for(let i = 1; i < p; i++) {
+            if((n * i) % p === 1) {
+                inv = i;
+                break;
+            }
+        }
 
-    const x2 = cx + (r + tickLen) * cos(a);
-    const y2 = cy + (r + tickLen) * sin(a);
+        if (inv !== -1 && n <= inv) {
+            line(pos[n].x, pos[n].y, pos[inv].x, pos[inv].y);
+        }
+    }
 
-    stroke(0,200,0);
-    line(x, y, x2, y2);
+    // Čárky, čísla
+    for (let n = 0; n < p; n++) {
+        const { x, y, a } = pos[n];
+        const x2 = cx + (r + tickLen) * cos(a);
+        const y2 = cy + (r + tickLen) * sin(a);
 
+        stroke(mainColor);
+        line(x, y, x2, y2);
+
+        noStroke();
+        fill(textColor);
+        const tx = cx + (r + tickLen + 15) * cos(a);
+        const ty = cy + (r + tickLen + 15) * sin(a);
+        text(n, tx, ty);
+
+        // Označení čísel bez inverze (pokud n a p nejsou nesoudělná)
+        if (n !== 0) {
+            let hasInverse = false;
+            for(let i = 1; i < p; i++) {
+                if((n * i) % p === 1) { hasInverse = true; break; }
+            }
+            if (!hasInverse) {
+                fill(255, 0, 0); // Červená pro neexistující inverzi
+                circle(x, y, 5);
+            }
+        }
+    }
+
+    // Informační text dole
     noStroke();
-    //fill(0);
-    fill(200);
-    const tx = cx + (r + tickLen + 12) * cos(a);
-    const ty = cy + (r + tickLen + 12) * sin(a);
-    text(n, tx, ty);
-
-    if (n !== 0) {
-      const inv = modPow(n, p - 2, p);
-      if ((n * inv) % p !== 1) {
-        //fill(255, 140, 0);
-        fill(0, 255, 0);
-        circle(x, y, 5);
-      }
-    }
-  }
-
-  noStroke();
-  ///fill(0);
-  fill(0, 255, 0);
-  textSize(12);
-  text(`mod p = ${p}`, 60, height - 15);
+    fill(mainColor);
+    textSize(14);
+    textStyle(BOLD);
+    text(`Modulo n = ${p}`, cx, height - 15);
 }
 </script>
-</div>
+
 </body>
 </html>

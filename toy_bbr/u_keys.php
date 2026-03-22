@@ -42,7 +42,8 @@ $count = 0;
 foreach([$k1, $k2, $k3] as $k) if($k > 0) $count++;
 ?>
 
-<h1 class="digip">KEYS</h1>
+<h1 class="digip col3">KEYS</h1>
+<div class="grad_line"></div>
 <h3>Private key and the corresponding public key</h3>
 
 <div class="flex-wrap">
@@ -50,16 +51,16 @@ foreach([$k1, $k2, $k3] as $k) if($k > 0) $count++;
    
    
 <?php if($k1 > 0): ?>
-    <div class="box2">
+    <div class="box3">
 
         <div style="margin-bottom: 10px;">
-            <span style="color: #888;">PubKey (Hex): </span>
-            <span id="pub-addr" style="color: orange; font-size: 1.2em; font-weight: bold;">...</span>
+            <span>PubKey (Hex): </span>
+            <b id="pub-addr" class="digip size2 col3 padd8">...</b>
         </div>
 
         <div style="margin-bottom: 10px;">
-            <span style="color: #888;">Public point P (k1 * G): </span>
-            <span id="pub-point" style="color: #fff;">[ ?, ? ]</span>
+            <span>Public point P (k1 * G): </span>
+            <b id="pub-point" class="col2">[ ?, ? ]</b>
         </div>
         <hr style="border: 0; border-top: 1px dashed #333; margin: 15px 0;">
         <button id="toggle-priv-btn">
@@ -105,6 +106,9 @@ foreach([$k1, $k2, $k3] as $k) if($k > 0) $count++;
         <div id="save-status" class="log"></div>
     </div>
     <!-- =========================== -->
+
+
+
 
 </div>
 </div>
@@ -185,6 +189,9 @@ $(function() {
     
     <div id="p5-holder" style="position: relative; line-height: 0;"></div>
 
+    
+
+
     <div style="display: flex; flex-direction: column; align-items: center; margin-left: 20px; height: 600px;">
         <span style="color: #00ff00; font-family: monospace; margin-bottom: 10px;">MAX</span>
         
@@ -198,6 +205,10 @@ $(function() {
             <span id="key" style="font-size: 24px; color: #0f0; font-weight: bold;">1</span>
         </div>
     </div>
+
+
+
+
 </div>
 </div>
 <script src="js/u_key251.js?v=2.0"></script>

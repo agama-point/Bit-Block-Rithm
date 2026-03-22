@@ -50,16 +50,9 @@ try {
     width: 100%; /* Zajistí využití celého prostoru kontejneru */
 }
 
-.block-info { 
-    padding: 10px; 
-    box-sizing: border-box;
-    /* Odstraněno display: flex a justify-content, aby se text mohl roztáhnout */
-    min-width: 0; /* Klíčové pro správné fungování flex-grow u sousedů */
-}
-
 .side-block { 
-    width: 60px; 
-    min-width: 60px; /* Garantuje minimální šířku */
+    width: 65px; 
+    min-width: 65px; /* Garantuje minimální šířku */
     flex-shrink: 0;  /* Zakáže prohlížeči čtverec zmenšovat */
     text-align: center; 
     font-weight: bold;
@@ -95,12 +88,13 @@ try {
 </head>
 
 <body>
-<script>
-    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); }
-</script>
+<?php 
+   include "head.php"; ?>
 
-<div class="container">
-    <h1 class="digip">Block Explorer</h1>
+
+<div class="content">
+    <h1 class="digip col3">Block Explorer</h1>
+    <div class="grad_line"></div>
 
     <?php if (isset($error_msg)): ?>
         <div class="block-info" style="border-color: red; color: red;">
@@ -110,47 +104,47 @@ try {
     <?php else: ?>
         
         <div class="block-navigation">
-            <div class="box2 block-info side-block">
-                <?php if ($id_block > 1): ?>
-                    <a href="show_block.php?id=<?= $id_block - 1 ?>" class="block-link">#[-1]</a>
-                <?php else: ?>
-                    <span class="dim">NULL</span>
-                <?php endif; ?>
-            </div>
+        <?php if ($id_block > 1): ?>
+          <a href="show_block.php?id=<?= $id_block - 1 ?>" class="block-link">
+          <div class="box-L padd33 side-block">#[-1]</div></a>
+        <?php else: ?>
+          <span class="dim">NULL</span>
+        <?php endif; ?>
+            
+        <div class="nav-arrow">&rarr;</div>
 
-            <div class="nav-arrow">&rarr;</div>
+        <div class="box1 block-info main-prev-info">
+             <?php if ($prev_block): 
+               $raw_header = $prev_block['id_block'] . '|' . 
+                             $prev_block['prev_hash'] . '|' . 
+                             $prev_block['timestamp'] . '|' . 
+                             ($prev_block['tx_root'] ?: 'NULL') . '|' . 
+                             ($prev_block['nonce'] ?: 'NULL');
+           ?>
+          <strong>Previous block: Header #<?= $prev_block['id_block'] ?></strong> | 
+          PrevHash: <span class="col_vio"><?= $prev_block['prev_hash'] ?></span> | 
+          Time: <span class="num-val"><?= $prev_block['timestamp'] ?></span><br />
+          TX_Root: <span class="col_vio"><?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?></span> | 
+          Nonce: <span class="col_gre"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?></span>
+                   
+         <div class="raw-data-box">
+         :.: <span class="col_gre" id="header-to-hash"><?= htmlspecialchars($raw_header) ?></span> 
+         &rarr; <span id="real-time-hash" class="col_vio">...</span>
+         </div>
+         <?php else: ?>
+               <div style="text-align:center;" class="dim">GENESIS BLOCK: NO PARENT HEADER DATA</div>
+         <?php endif; ?>
+         </div>
 
-            <div class="box1 block-info main-prev-info">
-                <?php if ($prev_block): 
-                    $raw_header = $prev_block['id_block'] . '|' . 
-                                  $prev_block['prev_hash'] . '|' . 
-                                  $prev_block['timestamp'] . '|' . 
-                                  ($prev_block['tx_root'] ?: 'NULL') . '|' . 
-                                  ($prev_block['nonce'] ?: 'NULL');
-                ?>
-                    <strong>Previous block: Header #<?= $prev_block['id_block'] ?></strong> | 
-                    PrevHash: <span class="col_vio"><?= $prev_block['prev_hash'] ?></span> | 
-                    Time: <span class="num-val"><?= $prev_block['timestamp'] ?></span><br />
-                    TX_Root: <span class="col_vio"><?= htmlspecialchars($prev_block['tx_root'] ?: 'NULL') ?></span> | 
-                    Nonce: <span class="col_gre"><?= htmlspecialchars($prev_block['nonce'] ?: 'NULL') ?></span>
-                    
-                    <div class="raw-data-box">
-                        :.: <span class="col_gre" id="header-to-hash"><?= htmlspecialchars($raw_header) ?></span> 
-                        &rarr; <span id="real-time-hash" class="col_vio">...</span>
-                    </div>
-                <?php else: ?>
-                    <div style="text-align:center;" class="dim">GENESIS BLOCK: NO PARENT HEADER DATA</div>
-                <?php endif; ?>
-            </div>
+         <div class="nav-arrow">&rarr;</div>
+            
+         <a href="show_block.php?id=<?= $id_block + 1 ?>" class="block-link">
+         <div class="box-R padd33 side-block">#[+1]</div></a>
+            
+    </div> 
 
-            <div class="nav-arrow">&rarr;</div>
+     <h1 class="digip col3">Block <span class="col1"><?= $block['id_block'] ?></span> details:</h1>
 
-            <div class="box2 block-info side-block">
-                <a href="show_block.php?id=<?= $id_block + 1 ?>" class="block-link">#[+1]</a>
-            </div>
-        </div> 
-
-        <h2>Block details #<?= $block['id_block'] ?></h2>
 <div class="box2">
         <table class="tab">
             <tr><td>Block ID</td><td class="num-val"><?= $block['id_block'] ?></td></tr>
@@ -165,7 +159,32 @@ try {
                     <span style="color:#777; margin-left:10px;">(<?= date("Y-m-d H:i:s", $block['timestamp']) ?>)</span>
                 </td>
             </tr>
-            <tr><td>Transactions (IDs)</td><td style="color:#aaa; font-size:0.9em;"><?= htmlspecialchars($block['tx_txt']) ?></td></tr>
+            <tr><td>Transactions (IDs)</td><td style="color:#aaa;">
+
+<?php 
+                $tx_raw = trim($block['tx_txt']);
+                if (!empty($tx_raw)) {
+
+                    $tx_array = explode(',', $tx_raw);
+                    $links = [];
+
+                    foreach ($tx_array as $tx_id) {
+                        $tx_id = trim($tx_id);
+
+                        if (is_numeric($tx_id)) {
+                            $links[] = '<a href="show_tx.php?txid=' . urlencode($tx_id) . '" class="tx-link">' . htmlspecialchars($tx_id) . '</a>';
+                        } else {
+                            $links[] = htmlspecialchars($tx_id);
+                        }
+                    }
+
+                    echo implode(', ', $links);
+                } else {
+                    echo '<span class="empty">empty</span>';
+                }
+                ?>
+
+</td></tr>
             <tr><td>TX Root</td>
 <td class="col_vio"><?= htmlspecialchars($block['tx_root']) ?></td></tr>
             <tr>
@@ -174,6 +193,34 @@ try {
 <td><?= htmlspecialchars($block['k']) ?></td></tr>
         </table>
 </div>
+
+
+<div class="box1">
+<h3>Block</h3>
+
+<input id="blid" placeholder="blid">
+<button id="go">Go to block ID</button>
+</div>
+
+<script>
+// ---bl
+$("#go").click(function() {
+
+    let txid = $("#blid").val().trim();
+
+    if (txid === "") {
+        alert("Enter txid");
+        return;
+    }
+
+    window.location.href =
+        "https://www.agamapoint.com/bbr/show_block.php?id=" +
+        encodeURIComponent(txid);
+
+});
+</script>
+
+
 
 
     <?php endif; ?>

@@ -26,12 +26,13 @@ if (!in_array($page, $allowed_pages)) {
     <meta charset="utf-8">
     <title>Wallet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/bbr.css?v=1.5">
+    <link rel="stylesheet" href="css/bbr.css?v=1.6">
     <script src="js/jquery.min.js"></script>
     <script src="js/agama_bech32.js"></script>
-    <script src="js/ash24.js?v=0.11"></script>
-    <script src="js/ash32.js?v=0.10"></script>
-    <script src="js/ess251.js?v=0.33"></script>
+    <script src="js/ash24.js"></script>
+    <script src="js/ash32.js"></script>
+    <script src="js/ess251.js"></script>
+    <script src="js/canv_hex_bin.js?v=0.21"></script>
     <script src="js/qrcode.js"></script> 
     <script src="js/p5.min.js"></script>
 </head>
@@ -44,7 +45,7 @@ if (!in_array($page, $allowed_pages)) {
 </script>
 
 <div class="header">
-  <div><b class="col_ora">B·B·R</b> | Bit·Block·Rithm | Don’t trust, verify. </div>
+  <div><b class="col3">B·B·R</b> | Bit·Block·Rithm | Don’t trust, verify. </div>
   <div>
     <button id="theme-toggle" style="padding: 2px 10px; cursor: pointer; vertical-align: middle; min-width: 80px;">
         </button>
@@ -93,7 +94,7 @@ if (!in_array($page, $allowed_pages)) {
           include "u_" . $page . ".php";
       } else {
           echo ".:."; 
-          include 'u_links.php';
+          include 'u_home.php';
       }
     ?>
     </div>

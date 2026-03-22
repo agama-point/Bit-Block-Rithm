@@ -59,7 +59,7 @@ $current_k1 = $_SESSION['k1'] ?? null;
      style="display:none;">
 </div>
 
-<div class="panel box2">
+<div class="panel box3">
     <h3 class="col_ora">Mining Terminal</h3>
     <?php if (!$current_k1): ?>
         <p style="color: orange;">⚠ You do not have a private key (k1) set.</p>
@@ -67,8 +67,8 @@ $current_k1 = $_SESSION['k1'] ?? null;
         <div>
             <p>✔ Private key (k1) loaded securely.</p>
             <div>
-                <b>Address:</b> <span id="pub-addr">...</span><br>
-                <b>Mining delay:</b> <span><?= $currentDelay ?> s</span>
+                <b>Address:</b> <span class="col3" id="pub-addr">...</span><br>
+                <b>Mining delay [sec.]:</b> <span class="digip size2 col2 padd8"><?= $currentDelay ?></span>
             </div>
         </div>
         <br />

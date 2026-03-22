@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <title>BBR - Interactive Gears</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/bbr.css?v=1.3">  
+    
+    <script src="js/jquery.min.js"></script>
+    <script src="js/p5.min.js"></script>
+    <script src="js/box_design.js"></script>
+    <script src="js/box_gui.js"></script>
+    <script src="js/box_gears.js"></script>
+    <script src="js/skeleton2603.js"></script>
+
+    <style>
+        /* FLEXBOX KONTEJNER PRO VYCENTROVÁNÍ CANVASU */
+        .content5 {
+            flex-grow: 1; /* Zabere zbytek okna pod headerem */
+            display: flex;
+            justify-content: center; /* Horizontální centr */
+            align-items: center;     /* Vertikální centr */
+            position: relative;      /* Nutné pro absolutní pozicování sliderů uvnitř */
+            /*background-color: #050505;*/
+        }
+
+        /* Styl pro p5 prvky, aby se nehýbaly s celou stránkou, ale s kontejnerem */
+        canvas {
+            display: block;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        /* Úprava sliderů a spanů, aby neplavaly mimo */
+        input[type=range], span { z-index: 10; }
+
+    #svgWrapper {
+            display: none;    
+            overflow: hidden; 
+            /*width: 800px; */    
+            margin: 0 auto;  
+            /*border: 1px solid #ddd; */
+        }
+
+
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div><b class="col_ora">B·B·R</b> | Bit·Block·Rithm | <a href="index.php">Home</a> | Don’t trust, verify. </div>
+    <div>
+        <button id="theme-toggle">☼ Light</button>
+    </div>
+</div>
+
+<div class="box1">
+...
+</div>
+<div class="box2 h-center">
+<img src="svg/bbr_obt.svg" alt="Blockchain" width="800">
+</div>
+
+
+
+<div class="h-center">
+<button id="toggleBtn">Show detail</button><br />
+</div>
+<div class="h-center">
+<img id="mySvg" src="svg/bbr_block.svg" alt="Blockchain" width="800" style="display:none;">
+</div>
+
+<script>
+$(document).ready(function() {
+  $('#toggleBtn').click(function() {
+    if ($('#mySvg').is(':visible')) {
+      $('#mySvg').slideUp(1000);
+      $('#toggleBtn').text('Show detail');
+    } else {
+      $('#mySvg').slideDown(500);
+      $('#toggleBtn').text('Hide detail');
+    }
+  });
+});
+</script>
+
+
+
+<div class="h-center">
+<diw class="padd8 w800">
+OBC is based on the BBR <code>- Bit-Block-(algo)Ritm -</code> platform, an experimental architecture focused on minimalistic blockchain design. The system uses 8-bit ECC cryptography (ESS251) together with ASH24/32 hashing, creating a lightweight and educational cryptographic environment optimized for small data structures, simple verification, and transparent mathematical logic.
+</div></div>
+
+</br />
+
+<div class="content5" id="canvas-container">
+    <!-- p5.js canvas a slidery se vloží SEM -->
+</div>
+
+<!-- UI PANELY MIMO CANVAS -->
+<div class="panel" id="login-panel" style="display:none; position: absolute; top: 60px; right: 20px; z-index: 100; background: #222; padding: 20px; border: 1px solid #444; color: white;">
+    <h3>Login</h3>
+    ...dočasně nedostupné
+    <br><br>
+    <button id="login-cancel">Zavřít</button>
+</div>
+
+<script>
+// --- GLOBÁLNÍ PROMĚNNÉ PRO P5 ---
+let bigGear, smallGear, thirdGear;
+let sliderR1, sliderR2, sliderTeeth1;
+let valR1, valR2, valTeeth1;
+let speed = 0.003;
+let t1;
+
+// --- JQUERY LOGIKA ---
+$(function(){
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        $('body').addClass('light-mode');
+        $("#theme-toggle").html("☾ Dark");
+    }
+
+    $("#theme-toggle").on("click", function() {
+        $('body').toggleClass('light-mode');
+        let isLight = $('body').hasClass('light-mode');
+        $(this).html(isLight ? "☾ Dark" : "☼ Light");
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        if (typeof setColorStyle === 'function') {
+            setColorStyle(isLight ? 'light' : 'dark');
+        }
+    });
+
+    $("#login-toggle").on("click", function(e){ e.preventDefault(); $("#login-panel").toggle(); });
+    $("#login-cancel").on("click", function(){ $("#login-panel").hide(); });
+});
+
+// --- P5.JS SKETCH ---
+function setup() {
+    // Vytvoření canvasu a jeho umístění do kontejneru
+    let cnv = createCanvas(800, 600);
+    cnv.parent('canvas-container'); 
+
+    skeletonSetup(); 
+    
+    if ($('body').hasClass('light-mode')) { setColorStyle('light'); }
+
+    angleMode(RADIANS);
+    
+    t1 = new Template();
+    t1.basCol = color(0,100,0);
+    t1.gridStep = 10;
+    t1.x0 = t0.btnX0;
+    t1.w = t0.btnW;
+    t1.strokeW = 3;
+
+    textFont("Courier");
+    textSize(18);
+
+    rs0 = new RectSpec(100, t0.h - 60, 100, 30, 0);
+    rs1 = new RectSpec(100, t0.h - 100, 100, 30);
+
+    bigGear = new Gear(width/2, height/2, 150, 12, 3, 50, color(0,255,0), 2);
+    smallGear = new Gear(0, 0, 32, 12, 3, 0, color(0,255,0), 2);
+    thirdGear = new Gear(0, 0, 128, 12, 3, 39, color(0,255,0), 2);
+
+    // SLIDERY - Aby se hýbaly s vycentrovaným obsahem, dáváme je do kontejneru
+    // Musíme jim nastavit style position absolute, aby jejich souřadnice (20, 120) 
+    // byly vztaženy k levému hornímu rohu VYCENTROVANÉHO kontejneru.
+    
+    let container = select('#canvas-container');
+
+    sliderR1 = createSlider(20, 300, 150);
+    sliderR1.parent(container);
+    sliderR1.position(20, 120);
+    valR1 = createSpan(sliderR1.value());
+    valR1.parent(container);
+    valR1.position(160, 120);
+    sliderR1.input(updateGears);
+
+    sliderR2 = createSlider(20, 300, 25);
+    sliderR2.parent(container);
+    sliderR2.position(20, 150);
+    valR2 = createSpan(sliderR2.value());
+    valR2.parent(container);
+    valR2.position(160, 150);
+    sliderR2.input(updateGears);
+
+    sliderTeeth1 = createSlider(30, 180, 50);
+    sliderTeeth1.parent(container);
+    sliderTeeth1.position(20, 180);
+    valTeeth1 = createSpan(sliderTeeth1.value());
+    valTeeth1.parent(container);
+    valTeeth1.position(160, 180);
+    sliderTeeth1.input(updateGears);
+
+    updateGears();
+}
+
+function draw() {
+    background(currentColors[0]);
+    skeletonDraw();
+
+    t0.drawQ1();
+    t0.drawQ2();
+    t0.drawQ3();
+    t0.drawQ4();
+
+    updateGears();
+
+    let gearStroke = currentColors[3];
+    let gearFill   = color(60,60,60,32); 
+
+    drawGearWithCenter(bigGear, gearStroke, gearFill);
+    drawGearWithCenter(smallGear, gearStroke, gearFill);
+    drawGearWithCenter(thirdGear, gearStroke, gearFill);
+
+    if (toggRun1.checked) {
+        bigGear.updateRotation(speed);
+        smallGear.updateRotation(speed * smallGear.ratio);
+        thirdGear.rotation = smallGear.rotation;
+    }
+
+    fill(60,60,60,200);
+    rect(0,0,t0.xL13,t0.h);
+    t0.draw();  
+    t0.drawGrid();
+
+    t1.basCol = currentColors[3];
+    t1.drawGridPoints();
+
+    rs0.draw();
+    rs1.draw();
+
+    noStroke();
+    fill(currentColors[3]);
+    textStyle(BOLD); 
+    text("Fr:" + frameCount, 105, t0.h - 80);
+ 
+    push();
+    translate(330, 250);
+    scale(0.7);   
+    drawGearWithCenter(bigGear, currentColors[3], color(60,60,60,32));
+    drawGearWithCenter(smallGear, currentColors[3], color(60,60,60,32));
+    drawGearWithCenter(thirdGear, currentColors[3], color(60,60,60,32));
+    pop();
+
+    push();
+    translate(390, 150);
+    scale(0.5);
+    rotate(1);
+    drawGearWithCenter(bigGear, currentColors[2], color(50,50,50,64));
+    drawGearWithCenter(smallGear, currentColors[2], color(50,50,50,64));
+    drawGearWithCenter(thirdGear, currentColors[2], color(50,50,50,64));
+    pop();
+}
+
+function drawGearWithCenter(gear, col, fillCol) {
+    let oldCol = gear.col;
+    gear.col = col || oldCol;
+    gear.draw(fillCol);
+    fill(col);
+    noStroke();
+    ellipse(gear.x, gear.y, 10);
+    gear.col = oldCol;
+}
+
+function updateGears() {
+    bigGear.radius = sliderR1.value();
+    smallGear.radius = sliderR2.value();
+    bigGear.teeth = sliderTeeth1.value();
+
+    valR1.html(bigGear.radius);
+    valR2.html(smallGear.radius);
+    valTeeth1.html(bigGear.teeth);
+
+    let module = (2 * bigGear.radius) / bigGear.teeth;
+    smallGear.teeth = Math.round((2 * smallGear.radius) / module);
+
+    let ratio = -bigGear.teeth / smallGear.teeth;
+    let centerDist = bigGear.radius + smallGear.radius - Math.min(bigGear.toothHeight, smallGear.toothHeight)*0.3
+                    + (bigGear.toothHeight + smallGear.toothHeight)*0.5 + 3;
+
+    bigGear.setPosition(width/2 - centerDist/2, height/2);
+    smallGear.setPosition(width/2 + centerDist/2, height/2);
+    smallGear.setRotationOffset(PI / smallGear.teeth);
+    smallGear.setRatio(ratio);
+
+    thirdGear.setPosition(smallGear.x, smallGear.y);
+    thirdGear.setRatio(-smallGear.teeth / thirdGear.teeth);
+}
+
+function mousePressed() {
+    skeletonMousePressed();
+}
+</script>
+
+</body>
+</html>

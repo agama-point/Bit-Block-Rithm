@@ -1,7 +1,6 @@
 <style>
     .info-container { margin-top: 10px;  font-family: monospace; }
     .info-box {
-        background: #111;
         padding: 15px;
         border: 1px solid;
         min-height: 200px; /* Aby stránka při přepínání neposkakovala */
@@ -9,14 +8,7 @@
     #techInfo {  display: none; /* Výchozí stav: schováno */
     }
     .controls {  display: flex;  gap: 5px;   }
-    buttonX {
-        padding: 8px 15px;
-        cursor: pointer;
-        background: #222;
-        color: #888;
-        border: 1px solid #444;
-        transition: 0.2s;
-    }
+    
     /* Styl pro aktivní tlačítko */
     button.active {
         background: #333;
@@ -27,6 +19,15 @@
    
 </style>
 
+
+<img class="w800" src="svg/bbr_obt.svg" alt="Blockchain">
+<div class="padd8 w800">
+OBC is based on the BBR <span class="col1">- Bit-Block-(algo)Ritm -</span> platform, an experimental architecture focused on minimalistic blockchain design. The system uses 8-bit ECC cryptography (ESS251) together with ASH24/32 hashing, creating a lightweight and educational cryptographic environment optimized for small data structures, simple verification, and transparent mathematical logic.
+</div>
+<br />
+<div class="grad_line"></div>
+<br />
+
 <div class="controls">
     <button id="btnBasic" class="active">Basic Info</button>
     <button id="btnTech">Technical Info</button>
@@ -34,7 +35,6 @@
 
 <div class="info-container">
     <div id="basicInfo" class="info-box">
-<img src="svg/bbr_block.svg" alt="Blockchain" width="650">
  
 <pre class="log">
 create account or login
@@ -72,7 +72,9 @@ working with the coins
     <div id="techInfo" class="info-box">
 
 <div>
-<img src="svg/bbr2601.svg" alt="test" width="650">
+<img src="svg/bbr_keys.svg" alt="Blockchain" width="650">
+<br />
+<img src="svg/bbr_block.svg" alt="Blockchain" width="650">
 </div>
 
 <pre>

@@ -27,11 +27,11 @@ $lb_nonce  = $last_block ? $last_block['nonce'] : '99999';
      style="display:none;">
 </div>
 
-<div style="background: #222; color: #eee; padding: 10px; margin-bottom: 10px; border: 1px solid #444;">
+<div class="box2">
     <strong>Last Block Info:</strong> 
     ID: <?= $lb_id ?> | 
     TS: <?= $lb_ts ?> | 
-    TX_ROOT: <span style="color: #0f0;"><?= $lb_root ?> | <?= $lb_nonce ?><br />
+    TX_ROOT: <span class="col_gre"><?= $lb_root ?> | <?= $lb_nonce ?><br />
     :.:<?= $lb_id ?>|<?= $lb_ts ?>|<?= $lb_root ?>:.:
     </span>
 </div>

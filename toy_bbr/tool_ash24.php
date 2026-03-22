@@ -1,4 +1,4 @@
-<div class="box2">
+<div class="box3">
     <h3 class="col_ora">24-bit hash function ASH24</h3>
 
     <input type="text" id="tool-input" maxlength="63" style="width:300px; font-family:monospace;" placeholder="Enter hex or data" />

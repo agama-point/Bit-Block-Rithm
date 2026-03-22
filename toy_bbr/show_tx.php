@@ -40,15 +40,11 @@ $sig_hex = $row['sig'] ?? '';
 <head>
     <meta charset="UTF-8">
     <title>TX Analysis & History</title>
-    <link rel="stylesheet" href="css/bbr.css?v=2">
+    <link rel="stylesheet" href="css/bbr.css?v=1.51">
     <script src="js/jquery.min.js"></script>
     <script src='js/ash24.js'></script>
     <script src='js/ess251.js?v=0.31'></script>
     <style>
-        .container { display: flex; gap: 20px; height: calc(100vh - 100px); }
-        .left-panel { flex: 0 1 650px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 10px; }
-        .right-panel { flex: 1; display: flex; flex-direction: column; min-width: 350px;}
-
         .data-box { line-height: 1.4; margin-bottom: 10px; }
         .val-hl { color: #00ccff; font-weight: bold; }
         
@@ -66,14 +62,16 @@ $sig_hex = $row['sig'] ?? '';
     </style>
 </head>
 <body>
-<script>
-    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); }
-</script>
 
-<h1 class="digip">TX Analysis | ID <?= htmlspecialchars($row['txid']) ?></h1>
+<?php 
+   include "head.php"; ?>
 
-<div class="container">
-    <div class="left-panel">
+<div class="content">
+<h1 class="digip col3">TX Analysis | ID <span class="col1"><?= htmlspecialchars($row['txid']) ?></span></h1>
+<div class="grad_line"></div>
+
+<div class="flex-wrap">
+<div class="flex-left">
         <div class="data-box">
             <input type="hidden" id="val_in" value="<?= (int)$row['val1'] ?>">
             <input type="hidden" id="val_out" value="<?= (int)$row['val2'] ?>">
@@ -108,10 +106,10 @@ $sig_hex = $row['sig'] ?? '';
                 <input type="text" id="in_sig" value="<?= htmlspecialchars($sig_hex) ?>">
                 <div id="res_rs" class="info"></div>
             </div>
-            <button class="btn-action" onclick="doVerify()">Verify Signature</button>
+            <button class="ui-btn" onclick="doVerify()">Verify Signature</button>
             <span id="status_box"></span>
         </div>
-
+<br />
         <div class="box1">
             <h3 class="col_ora">Sign Section</h3>
             <div class="row">
@@ -119,11 +117,11 @@ $sig_hex = $row['sig'] ?? '';
                 <input type="number" id="in_priv" value="123">
                 <div class="info">Deterministic signing</div>
             </div>
-            <button class="btn-action btn-signx" onclick="doSign()">Sign Message</button>
-            <button class="btn-action btn-clearx" onclick="$('#log').text('')">Clear Log</button>
+            <button class="ui-btn" btn-signx" onclick="doSign()">Sign Message</button>
+            <button onclick="$('#log').text('')">Clear Log</button>
         </div>
 
-
+<br />
         <div class="box2">
             <h3 class="col_ora">Transaction History (Chain)</h3>
             <table class="tab">
@@ -148,9 +146,7 @@ $sig_hex = $row['sig'] ?? '';
             </table>
         </div>
 
-
-
-
+<br />
         <div class="box2" style="border-color: #333;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; color: #00ccff; font-size: 0.9em;">CRYPTOGRAPHIC SPECIFICATION (ESS251)</h3>
@@ -182,8 +178,16 @@ $sig_hex = $row['sig'] ?? '';
         </div>
     </div>
 
-    <div class="right-panel">
+    <div class="flex-right">
         <pre id="log" class="log"></pre>
+
+<div class="box1">
+<h3>Transaction</h3>
+
+<input id="txid" placeholder="txid">
+<button id="go">Transaction</button>
+</div>
+
     </div>
 </div>
 
@@ -321,6 +325,22 @@ $(document).ready(function() {
             $(this).text("HIDE DETAILS");
         }
     });
+});
+
+// ---tx
+$("#go").click(function() {
+
+    let txid = $("#txid").val().trim();
+
+    if (txid === "") {
+        alert("Enter txid");
+        return;
+    }
+
+    window.location.href =
+        "https://www.agamapoint.com/bbr/show_tx.php?txid=" +
+        encodeURIComponent(txid);
+
 });
 </script>
 
