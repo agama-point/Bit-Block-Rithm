@@ -65,5 +65,16 @@
 
 <br />
 <h3>Others</h3>
+<a href="index.php?route=get_last_block">rest_api: ?route=get_last_block</a><br/>
+<a href="index.php?route=get_block/123">rest_api: ?route=get_block/123</a><br/>
+?route=get_balance/83ca<br/>
+<a href="index.php?route=get_tx_raw/1230">rest_api: ?route=get_tx_raw/1230</a><br/>
+<a href="index.php?route=get_tx/1230">rest_api: ?route=get_tx/1230</a><br/>
+?route=send_tx/
+?...<br/>
+<br/>
+
+
+
 <a href="spravce_bbr.php">s_bbr</a><br/>
 <a href="https://donio.cz/matematika-bitcoinu-manuscript">donio.cz</a><br/>

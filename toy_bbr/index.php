@@ -1,6 +1,7 @@
 <?php
 session_start();
-include "index_api.php"; // ajax
+include "index_api.php";     // ajax
+include "index_api_get.php"; // rest api
 
 // LOGOUT
 if (isset($_GET['logout'])) {
