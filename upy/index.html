@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>ESP32 Serial log</title>
+<link rel="stylesheet" href="css/serial.css">
+<script src="js/jquery.min.js"></script>
+</head>
+<body>
+
+<script>
+console.log(location.href);
+</script>
+
+<div class="controls">
+
+<label><input type="radio" name="baud" value="9600" checked>9600</label>
+<label><input type="radio" name="baud" value="115200">115200</label>
+<button id="connectBtn">Připojit</button>
+<button id="disconnectBtn">Odpojit</button>
+<span id="status">Odpojeno</span>
+
+</div>
+
+<div class="controls">
+
+<button id="led1on">LED1 ON</button>
+<button id="led1off">LED1 OFF</button>
+
+<button id="led2on">LED2 ON</button>
+<button id="led2off">LED2 OFF</button><br>
+
+<input type="text" id="serialInput">
+<button id="sendBtn">Send</button>
+<button id="send2Btn">Send2</button>
+</div>
+
+<pre id="log"></pre>
+
+<script src="js/esp_serial.js"></script>
+
+<script>
+function log(text) {
+    let logEl = $("#log");
+    logEl.append(text + "\n");
+    logEl.scrollTop(logEl[0].scrollHeight);
+}
+
+// Registrace callbacku
+onDataReceived = function(text) {
+    log(text.trim()); 
+    
+    if(text.includes("ALARM")) {
+        alert("ESP hlásí poplach!");
+    }
+};
+
+$("#connectBtn").on("click", connectToSerial);
+$("#disconnectBtn").on("click", disconnectFromSerial);
+
+// LED1
+$("#led1on").click(function() {
+    const msg = { led1: "on" };
+    sendToSerial(JSON.stringify(msg) + "\n");
+});
+$("#led1off").click(function() {
+    const msg = { led1: "off" };
+    sendToSerial(JSON.stringify(msg) + "\n");
+});
+
+// LED2
+$("#led2on").click(function(){
+    const msg = { led2: "on" };
+    sendToSerial(JSON.stringify(msg) + "\n");
+    log("TX led21");
+});
+$("#led2off").click(function(){
+    const msg = { led2: "off" };
+    sendToSerial(JSON.stringify(msg) + "\n");
+    log("TX led20");
+});
+
+// Text input + Send
+$("#sendBtn").click(function() {
+    const text = $("#serialInput").val();
+    if (text) {
+        const msg = JSON.stringify({ text: text }) + "\n";
+        sendToSerial(msg);
+        log("sendToSerial text: " + text);
+    }
+});
+
+// Double input + Send2
+$("#send2Btn").click(function() {
+    const val = $("#serialInput").val();
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+        const msg = JSON.stringify({ double: num }) + "\n";
+        sendToSerial(msg);
+        log("sendToSerial double: " + num);
+    } else {
+        log("Invalid number for double");
+    }
+});
+</script>
+</body>
+</html>
