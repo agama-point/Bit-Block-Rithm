@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32 Serial Control</title>
+    <link rel="stylesheet" href="css/bbr.css">
+    <script src="js/jquery.min.js"></script>
+
+    <style>
+        #statusDot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #888;
+            margin-right: 6px;
+        }
+        #statusDot.connected { background: #2ecc71; }
+       
+    </style>
+</head>
+<body>
+
+<h1 class="digip col3">TESTS & EXAMPLES</h1>
+<div class="grad_line"></div>
+
+<div class="flex-wrap">
+    <div class="flex-left">
+        <div class="box1">
+            <div class="box3">
+                <span id="statusDot"></span>
+                <button id="connectBtn">Connect</button>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <br/ >
+
+            <div class="box3">
+                <span>My account: </span>
+                <span class="col3" id="Taddr">...</span>
+<span>Balance: </span>
+    <span  class="col2" id="Tbalance">0</span> <span>BBR</span>
+  
+            </div>
+
+            <div class="controls">
+                <input type="text" id="serialInput" placeholder="Message for ESP">
+                <button id="sendBtn">Send Text</button>
+                <button id="send2Btn">Send Double</button>
+                <button id="sendAddr">Get Addr</button>
+                <button id="sendSign">Sign</button>
+                <button id="logClear">CLR LOG</button>
+            </div>
+            
+            <br/ >
+            <div class="box2">
+            <button id="led1on">LED1 ON</button>
+            <button id="led1off">LED1 OFF</button>
+            <button id="led2on">LED2 ON</button>
+            <button id="led2off">LED2 OFF</button>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    <div class="flex-right">
+        <div class="box3">
+            <pre id="log"></pre>
+        </div>
+    </div>
+</div>
+
+<script src="js/esp_serial.js"></script>
+
+
+<script>
+    // GLOBAL VARIABLES
+    let connected = false;
+    let addrRequested = false;
+    let expectingAddr = false; // "Gate" for address recognition
+    let espAddr = "";          // Globally accessible address variable
+
+    // Function to display messages in the UI log
+    function log(text) {
+        let logEl = $("#log");
+        logEl.append(text + "\n");
+        logEl.scrollTop(logEl[0].scrollHeight);
+    }
+
+    // Function to fetch balance from external API
+    function updateBalance(address) {
+        const url = `https://www.agamapoint.com/bbr/index.php?route=get_balance/${address}`;
+        
+        log(`>>> API: Fetching balance for address ${address}...`);
+        
+        $.getJSON(url, function(data) {
+            if (data.status === "ok") {
+                // Update UI with balance value
+                $("#Tbalance").text(data.balance);
+                log(`>>> API: Balance updated to ${data.balance} BBR`);
+            } else {
+                log(">>> API Error: Invalid response status");
+            }
+        }).fail(function() {
+            log(">>> API Error: Network request failed (CORS or Offline)");
+        });
+    }
+
+    // Clear log button
+    $("#logClear").click(function() { $("#log").text(""); });
+
+    // CALLBACK: Handles incoming data from esp_serial.js
+    // Note: Requires esp_serial.js to use the Line Buffer (newline splitting)
+    onDataReceived = function(text) {
+        text = text.trim();
+        if (!text) return; // Ignore empty lines
+        
+        log(text);
+
+        // 1. ADDRESS HANDLING: Only if specifically requested
+        if (expectingAddr && /^\d+$/.test(text)) {
+            espAddr = text;            // Store in global variable
+            $("#Taddr").text(espAddr); // Update UI
+            expectingAddr = false;     // Close the "gate"
+            log(">>> Address saved: " + espAddr);
+            
+            // Trigger balance update automatically
+            updateBalance(espAddr);
+        }
+
+        // 2. READY SIGNAL: Auto-request address on connection
+        if (text.includes("READY") && !addrRequested) {
+            addrRequested = true;
+            expectingAddr = true; 
+            log(">>> READY detected, requesting address from ESP...");
+            setTimeout(function() {
+                sendToSerial(JSON.stringify({ get: "addr" }) + "\n");
+            }, 200);
+        }
+
+        // 3. ALARM HANDLING
+        if (text.includes("ALARM")) { 
+            alert("ALARM received from ESP device!"); 
+        }
+    };
+
+    // CONNECT / DISCONNECT TOGGLE
+    $("#connectBtn").click(async function() {
+        if (!connected) {
+            const success = await connectToSerial();
+            if (success !== false) {
+                connected = true;
+                addrRequested = false;
+                $("#connectBtn").text("Disconnect");
+                $("#statusText").text("Connected");
+                $("#statusDot").addClass("connected");
+                log("System: Port opened successfully");
+            }
+        } else {
+            await disconnectFromSerial();
+            connected = false;
+            expectingAddr = false;
+            $("#connectBtn").text("Connect");
+            $("#statusText").text("Disconnected");
+            $("#statusDot").removeClass("connected");
+            $("#Taddr").text("...");
+            $("#Tbalance").text("0");
+            log("System: Port closed");
+        }
+    });
+
+    // MANUAL ADDRESS REQUEST
+    $("#sendAddr").click(function() { 
+        expectingAddr = true; // Open the gate before sending request
+        sendToSerial(JSON.stringify({ get: "addr" }) + "\n"); 
+        log("TX: Requesting address manually...");
+    });
+
+    // LED CONTROLS
+    $("#led1on").click(function() { sendToSerial(JSON.stringify({ led1: "on" }) + "\n"); });
+    $("#led1off").click(function() { sendToSerial(JSON.stringify({ led1: "off" }) + "\n"); });
+    $("#led2on").click(function() { sendToSerial(JSON.stringify({ led2: "on" }) + "\n"); });
+    $("#led2off").click(function() { sendToSerial(JSON.stringify({ led2: "off" }) + "\n"); });
+
+    // SEND GENERIC TEXT
+    $("#sendBtn").click(function() { 
+        const text = $("#serialInput").val();
+        if (text) { 
+            sendToSerial(JSON.stringify({ text: text }) + "\n"); 
+            log("TX text: " + text); 
+        }
+    });
+
+    // SEND NUMBER (DOUBLE)
+    $("#send2Btn").click(function() {
+        const val = $("#serialInput").val();
+        const num = parseInt(val, 10);
+        if (!isNaN(num)) { 
+            sendToSerial(JSON.stringify({ double: num }) + "\n"); 
+            log("TX double: " + num); 
+        } else {
+            log("Error: Input is not a valid number");
+        }
+    });
+
+    // SEND SIGNATURE
+    $("#sendSign").click(function() {
+        const text = $("#serialInput").val();
+        if (text) { 
+            sendToSerial(JSON.stringify({ sign: text }) + "\n"); 
+            log("TX sign: " + text); 
+        }
+    });
+</script>
+
+</body>
+</html>

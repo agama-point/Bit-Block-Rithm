@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Get block</title>
+</head>
+<body>
+
+<form id="f">
+<input id="id" value="123">
+<button>get block</button>
+</form>
+
+<pre id="out"></pre>
+
+<script>
+
+document.getElementById("f").onsubmit = async e => {
+
+    e.preventDefault()
+
+    let id = document.getElementById("id").value
+
+    let url =
+    "https://www.agamapoint.com/bbr/index.php?route=get_block/" + id
+
+    document.getElementById("out").textContent = url
+
+    try {
+
+        let r = await fetch(url)
+
+        let t = await r.text()
+
+        document.getElementById("out").textContent = t
+
+    } catch(e) {
+
+        document.getElementById("out").textContent =
+        "ERROR\n" + e
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
