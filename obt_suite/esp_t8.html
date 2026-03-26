@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ESP32 Serial Control</title>
+    <title>One Byte Toy | Suite ESP_T8 (8bit)</title>
     <link rel="stylesheet" href="css/bbr.css">
     <script src="js/jquery.min.js"></script>
 
@@ -16,51 +16,81 @@
             margin-right: 6px;
         }
         #statusDot.connected { background: #2ecc71; }
-       
+        
+        /* Table styling for UTXO */
+        .tabx { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tabx th, .tabx td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #444; }
+        
+        /* Form styling */
+        .controls inputx { margin-bottom: 5px; padding: 3px; }
     </style>
 </head>
 <body>
 
-<h1 class="digip col3">TESTS & EXAMPLES</h1>
+<h1 class="digip col3">OneByteToy SUITE_T8</h1>
 <div class="grad_line"></div>
-
 <div class="flex-wrap">
     <div class="flex-left">
         <div class="box1">
+            ESP32_S3 | ESP32_C3 | TROPIC01<br /><br />
+
             <div class="box3">
                 <span id="statusDot"></span>
                 <button id="connectBtn">Connect</button>
                 <span id="statusText">Disconnected</span>
+                <button id="sendAddr">Get PubKey/Addr</button>
             </div>
-            <br/ >
+            <br />
 
             <div class="box3">
                 <span>My account: </span>
                 <span class="col3" id="Taddr">...</span>
-<span>Balance: </span>
-    <span  class="col2" id="Tbalance">0</span> <span>BBR</span>
-  
+                <span>Balance: </span>
+                <span class="col2" id="Tbalance">0</span> <span>OBC</span>
+
+                <table class="tab w300" id="utxoTable">
+                    <thead>
+                        <tr>
+                            <th>TXID</th>
+                            <th>VALUE</th>
+                            <th>"coin control" SELECT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
             </div>
 
             <div class="controls">
+                <input class="w100" size="3" type="text" id="formFrom" placeholder="From Address">
+                <input size="3" type="text" id="formTxid" placeholder="TXID">
+                <input size="3" type="text" id="formTo" placeholder="To Address">
+                <input size="2" type="text" id="formVal" placeholder="Value">
+                <button id="formSign">Sign Transaction</button>
+                <br />
+                Alice: 7214 | Bob: 83ca | Test: 8891<br />
+                <input size="3" type="text" id="formSignature" placeholder="Signature result" readonly style="border-color: #2ecc71;">
+                <button class="ui-btn" id="formBroadcast">Broadcast</button>
+
+            </div>
+
+             <br />
+            <div class="box1">
                 <input type="text" id="serialInput" placeholder="Message for ESP">
                 <button id="sendBtn">Send Text</button>
-                <button id="send2Btn">Send Double</button>
-                <button id="sendAddr">Get Addr</button>
-                <button id="sendSign">Sign</button>
+                <button id="send2Btn">Double</button>                
+                <button id="sendSign">Sign Simple</button>
                 <button id="logClear">CLR LOG</button>
             </div>
             
-            <br/ >
+            <br />
             <div class="box2">
-            <button id="led1on">LED1 ON</button>
-            <button id="led1off">LED1 OFF</button>
-            <button id="led2on">LED2 ON</button>
-            <button id="led2off">LED2 OFF</button>
+                ESP HW test<br /> 
+                <button id="led1on">LED1 ON</button>
+                <button id="led1off">LED1 OFF</button>
+                <button id="led2on">LED2 ON</button>
+                <button id="led2off">LED2 OFF</button>
             </div>
-
-
-
         </div>
     </div>
 
@@ -73,13 +103,12 @@
 
 <script src="js/esp_serial.js"></script>
 
-
 <script>
     // GLOBAL VARIABLES
     let connected = false;
     let addrRequested = false;
-    let expectingAddr = false; // "Gate" for address recognition
-    let espAddr = "";          // Globally accessible address variable
+    let expectingAddr = false; // Flag to catch the next numeric string as address
+    let espAddr = "";          // Globally stored device address
 
     // Function to display messages in the UI log
     function log(text) {
@@ -88,62 +117,172 @@
         logEl.scrollTop(logEl[0].scrollHeight);
     }
 
-    // Function to fetch balance from external API
+
+// --- NEW EVENT: Broadcast Transaction to PHP API ---
+// This function collects everything and sends it to your server
+function broadcastTransaction() {
+    const payload = {
+        from: $("#formFrom").val(),
+        utxo_txid: $("#formTxid").val(),
+        to: $("#formTo").val(),
+        val1: $("#formVal").val(), // The total value of selected UTXO
+        val2: $("#formVal").val(), // For now, sending the full amount (0 change)
+        sig_hex: $("#formSignature").val()
+    };
+
+    if (!payload.sig_hex || payload.sig_hex === "") {
+        log(">> UI Error: No signature available. Sign the transaction first!");
+        return;
+    }
+
+    log(">> System: Broadcasting to API...");
+
+    $.ajax({
+        url: 'https://www.agamapoint.com/bbr/index.php?route=send_transaction',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function(response) {
+            // Assuming the server returns JSON
+            const res = typeof response === 'string' ? JSON.parse(response) : response;
+            
+            if (res.status === "ok") {
+                log(`>> API SUCCESS: ${res.message}. New TXID: ${res.txid}`);
+                alert(`Broadcasted! TXID: ${res.txid}`);
+                // Refresh balance after successful send
+                setTimeout(() => updateBalance(espAddr), 1000);
+            } else {
+                log(`>> API ERROR: ${res.message}`);
+            }
+        },
+        error: function() {
+            log(">> API Error: Network failure during broadcast");
+        }
+    });
+}
+
+
+
+    // Function to fetch balance and UTXOs from external API
     function updateBalance(address) {
         const url = `https://www.agamapoint.com/bbr/index.php?route=get_balance/${address}`;
         
-        log(`>>> API: Fetching balance for address ${address}...`);
+        log(`>> API: Fetching data for address ${address}...`);
         
         $.getJSON(url, function(data) {
             if (data.status === "ok") {
-                // Update UI with balance value
+                // Update UI balance
                 $("#Tbalance").text(data.balance);
-                log(`>>> API: Balance updated to ${data.balance} BBR`);
+                log(`>> API: Balance updated to ${data.balance} OBC (OneByteCoin)`);
+
+                // Update UTXO Table
+                let tableBody = $("#utxoTable tbody");
+                tableBody.empty(); // Clear current rows
+
+                if (data.unspent_outputs && data.unspent_outputs.length > 0) {
+                    data.unspent_outputs.forEach(utxo => {
+                        let row = `<tr>
+                            <td>${utxo.txid}</td>
+                            <td>${utxo.value}</td>
+                            <td><input type="radio" name="selectedUtxo" 
+                                       class="utxo-selector" 
+                                       data-txid="${utxo.txid}" 
+                                       data-val="${utxo.value}" 
+                                       value="${utxo.txid}"></td>
+                        </tr>`;
+                        tableBody.append(row);
+                    });
+                    log(`>> API: Loaded ${data.unspent_outputs.length} UTXOs`);
+                } else {
+                    log(">> API: No UTXOs found");
+                }
             } else {
-                log(">>> API Error: Invalid response status");
+                log(">> API Error: Invalid response status");
             }
         }).fail(function() {
-            log(">>> API Error: Network request failed (CORS or Offline)");
+            log(">> API Error: Network request failed");
         });
     }
+
+    // --- EVENT: Radio button selection in table (Coin Control) ---
+    $(document).on('change', '.utxo-selector', function() {
+        const txid = $(this).data('txid');
+        const val = $(this).data('val');
+        
+        $("#formFrom").val(espAddr);
+        $("#formTxid").val(txid);
+        $("#formVal").val(val);
+        $("#formTo").val("83ca"); // Default target
+        
+        log(`>> UI: Selected UTXO ${txid} (Value: ${val})`);
+    });
+
+    // --- EVENT: Form Sign Transaction ---
+    $("#formSign").click(function() {
+        const from = $("#formFrom").val();
+        const txid = $("#formTxid").val();
+        const to = $("#formTo").val();
+        const val = $("#formVal").val();
+
+        if(!from || !txid || !to || !val) {
+            log("Error: Transaction form is incomplete!");
+            return;
+        }
+
+        // Standard format: from|txid|to|val
+        const txString = `${from}|${txid}|${to}|${val}`;
+        
+        // Sending as JSON for signature
+        sendToSerial(JSON.stringify({ sign: txString }) + "\n");
+        log("TX Transaction: " + txString);
+    });
 
     // Clear log button
     $("#logClear").click(function() { $("#log").text(""); });
 
-    // CALLBACK: Handles incoming data from esp_serial.js
-    // Note: Requires esp_serial.js to use the Line Buffer (newline splitting)
     onDataReceived = function(text) {
         text = text.trim();
-        if (!text) return; // Ignore empty lines
+        if (!text) return; 
         
         log(text);
 
-        // 1. ADDRESS HANDLING: Only if specifically requested
-        if (expectingAddr && /^\d+$/.test(text)) {
-            espAddr = text;            // Store in global variable
-            $("#Taddr").text(espAddr); // Update UI
-            expectingAddr = false;     // Close the "gate"
-            log(">>> Address saved: " + espAddr);
-            
-            // Trigger balance update automatically
+        // 1. JSON PARSER (Signature results)
+        if (text.startsWith("{") && text.endsWith("}")) {
+            try {
+                const jsonObj = JSON.parse(text);
+                if (jsonObj.sig_res) {
+                    $("#formSignature").val(jsonObj.sig_res);
+                    log(">> UI: Signature received: " + jsonObj.sig_res);
+                    return;
+                }
+            } catch (e) {}
+        }
+
+        // 2. ADDRESS HANDLING: Nyní podporuje i HEXA znaky (a-f)
+        if (expectingAddr && /^[0-9a-fA-F]+$/.test(text)) {
+            espAddr = text.toLowerCase(); // Doporučuji ukládat v lowercase pro API
+            $("#Taddr").text(espAddr); 
+            expectingAddr = false;     
+            log(">> Address saved: " + espAddr);
             updateBalance(espAddr);
         }
 
-        // 2. READY SIGNAL: Auto-request address on connection
+        // 3. READY SIGNAL
         if (text.includes("READY") && !addrRequested) {
             addrRequested = true;
             expectingAddr = true; 
-            log(">>> READY detected, requesting address from ESP...");
+            log(">> READY detected, auto-requesting address...");
             setTimeout(function() {
                 sendToSerial(JSON.stringify({ get: "addr" }) + "\n");
             }, 200);
         }
 
-        // 3. ALARM HANDLING
+        // 4. ALARM HANDLING
         if (text.includes("ALARM")) { 
-            alert("ALARM received from ESP device!"); 
+            alert("ALARM received from ESP!"); 
         }
     };
+
 
     // CONNECT / DISCONNECT TOGGLE
     $("#connectBtn").click(async function() {
@@ -155,7 +294,7 @@
                 $("#connectBtn").text("Disconnect");
                 $("#statusText").text("Connected");
                 $("#statusDot").addClass("connected");
-                log("System: Port opened successfully");
+                log("System: Connected to port");
             }
         } else {
             await disconnectFromSerial();
@@ -166,53 +305,44 @@
             $("#statusDot").removeClass("connected");
             $("#Taddr").text("...");
             $("#Tbalance").text("0");
-            log("System: Port closed");
+            $("#utxoTable tbody").empty();
+            // Clear all form fields
+            $("#formFrom, #formTxid, #formTo, #formVal, #formSignature").val("");
+            log("System: Disconnected");
         }
     });
 
     // MANUAL ADDRESS REQUEST
     $("#sendAddr").click(function() { 
-        expectingAddr = true; // Open the gate before sending request
+        expectingAddr = true;
         sendToSerial(JSON.stringify({ get: "addr" }) + "\n"); 
-        log("TX: Requesting address manually...");
     });
 
-    // LED CONTROLS
+    // BASIC LED CONTROLS
     $("#led1on").click(function() { sendToSerial(JSON.stringify({ led1: "on" }) + "\n"); });
     $("#led1off").click(function() { sendToSerial(JSON.stringify({ led1: "off" }) + "\n"); });
     $("#led2on").click(function() { sendToSerial(JSON.stringify({ led2: "on" }) + "\n"); });
     $("#led2off").click(function() { sendToSerial(JSON.stringify({ led2: "off" }) + "\n"); });
+    $("#formBroadcast").click(function() { broadcastTransaction();});
 
-    // SEND GENERIC TEXT
+    // SEND TEXT
     $("#sendBtn").click(function() { 
         const text = $("#serialInput").val();
-        if (text) { 
-            sendToSerial(JSON.stringify({ text: text }) + "\n"); 
-            log("TX text: " + text); 
-        }
+        if (text) { sendToSerial(JSON.stringify({ text: text }) + "\n"); }
     });
 
-    // SEND NUMBER (DOUBLE)
+    // SEND DOUBLE
     $("#send2Btn").click(function() {
         const val = $("#serialInput").val();
         const num = parseInt(val, 10);
-        if (!isNaN(num)) { 
-            sendToSerial(JSON.stringify({ double: num }) + "\n"); 
-            log("TX double: " + num); 
-        } else {
-            log("Error: Input is not a valid number");
-        }
+        if (!isNaN(num)) { sendToSerial(JSON.stringify({ double: num }) + "\n"); }
     });
 
-    // SEND SIGNATURE
+    // SIMPLE SIGN (Legacy/Test)
     $("#sendSign").click(function() {
         const text = $("#serialInput").val();
-        if (text) { 
-            sendToSerial(JSON.stringify({ sign: text }) + "\n"); 
-            log("TX sign: " + text); 
-        }
+        if (text) { sendToSerial(JSON.stringify({ sign: text }) + "\n"); }
     });
 </script>
-
 </body>
 </html>
