@@ -43,7 +43,10 @@ while($tbl = $tablesRes->fetchArray(SQLITE3_ASSOC)){
     echo "<tr><td>$tableName</td><td>$numRecords</td><td>$lastMod</td></tr>";
 }
 
-echo "</table><hr />";
+echo "</table><br />";
+
+
+include "table_pristupy_min.php"; 
 ?>
 
       </div>

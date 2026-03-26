@@ -58,7 +58,6 @@ $sig_hex = $row['sig'] ?? '';
         .status-badge { font-weight: bold; padding: 4px 12px; margin-left: 10px; border-radius: 2px; }
         .ok { border: 1px solid #00ff99; color: #00ff99; }
         .bad { border: 1px solid #ff4136; color: #ff4136; }
-
     </style>
 </head>
 <body>
@@ -69,6 +68,50 @@ $sig_hex = $row['sig'] ?? '';
 <div class="content">
 <h1 class="digip col3">TX Analysis | ID <span class="col1"><?= htmlspecialchars($row['txid']) ?></span></h1>
 <div class="grad_line"></div>
+
+
+
+<div class="h-center">
+<button id="toggleBtn1">Show TX struct.</button> &nbsp;
+<button id="toggleBtn2">Show ESS251_DSA</button>
+<br />
+</div>
+
+<div class="h-center">
+<img id="mySvg1" src="svg/bbr_tx.svg" alt="TX" width="900" style="display:none;">
+<img id="mySvg2" src="svg/bbr_sign.svg" alt="Sign/Verify" width="900" style="display:none;">
+</div>
+
+
+<script>
+$(document).ready(function() {
+
+  $('#toggleBtn1').click(function() {
+
+    if ($('#mySvg1').is(':visible')) {
+      $('#mySvg1').slideUp(500);
+    } else {
+      $('#mySvg2').slideUp(500);
+      $('#mySvg1').slideDown(500);
+    }
+
+  });
+
+
+  $('#toggleBtn2').click(function() {
+
+    if ($('#mySvg2').is(':visible')) {
+      $('#mySvg2').slideUp(500);
+    } else {
+      $('#mySvg1').slideUp(500);
+      $('#mySvg2').slideDown(500);
+    }
+
+  });
+
+});
+</script>
+
 
 <div class="flex-wrap">
 <div class="flex-left">
@@ -107,6 +150,7 @@ $sig_hex = $row['sig'] ?? '';
                 <div id="res_rs" class="info"></div>
             </div>
             <button class="ui-btn" onclick="doVerify()">Verify Signature</button>
+            <button onclick="location.href='api_show_tx.php?txid=<?= htmlspecialchars($row['txid']) ?>'">Script API</button>
             <span id="status_box"></span>
         </div>
 <br />
@@ -125,24 +169,26 @@ $sig_hex = $row['sig'] ?? '';
         <div class="box2">
             <h3 class="col_ora">Transaction History (Chain)</h3>
             <table class="tab">
-                <tr>
-                    <th>TXID</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>In</th>
-                    <th>Out</th>
-                    <th>Datetime</th>
-                </tr>
-                <?php foreach ($chain as $c_row): ?>
-                <tr class="<?= ($c_row['txid'] == $row['txid']) ? 'current-row' : '' ?>">
-                    <td><a href="?txid=<?= urlencode($c_row['txid']) ?>"><?= htmlspecialchars($c_row['txid']) ?></a></td>
-                    <td class="col_vio"><?= htmlspecialchars(substr($c_row['from_addr'], 0, 8)) ?></td>
-                    <td class="col_vio"><?= htmlspecialchars(substr($c_row['to_addr'], 0, 8)) ?></td>
-                    <td><?= (int)$c_row['val1'] ?></td>
-                    <td><?= (int)$c_row['val2'] ?></td>
-                    <td><?= date('ymd H:i', $c_row['utxo_time']) ?></td>
-                </tr>
-                <?php endforeach; ?>
+              <tr>
+                 <th>TXID</th>
+                 <th>From</th>
+                 <th>To</th>
+                 <th>In</th>
+                 <th>Out</th>
+                 <th>Sig</th>
+                 <th>Datetime</th>
+              </tr>
+              <?php foreach ($chain as $c_row): ?>
+              <tr class="<?= ($c_row['txid'] == $row['txid']) ? 'current-row' : '' ?>">
+                 <td><a href="?txid=<?= urlencode($c_row['txid']) ?>"><?= htmlspecialchars($c_row['txid']) ?></a></td>
+                 <td class="col_vio"><?= htmlspecialchars(substr($c_row['from_addr'], 0, 8)) ?></td>
+                 <td class="col_vio"><?= htmlspecialchars(substr($c_row['to_addr'], 0, 8)) ?></td>
+                 <td><?= (int)$c_row['val1'] ?></td>
+                 <td><?= (int)$c_row['val2'] ?></td>
+                 <td><?= $c_row['sig'] ?></td>
+                 <td><?= date('ymd H:i', $c_row['utxo_time']) ?></td>
+              </tr>
+              <?php endforeach; ?>
             </table>
         </div>
 

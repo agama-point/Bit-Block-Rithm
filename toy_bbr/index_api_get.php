@@ -240,6 +240,119 @@ if ($endpoint === "get_tx" && $param1) {
 }
 
 
+//---------------------------------------
+// get_balance /api/get_balance/adresa
+//---------------------------------------
+if ($endpoint === "get_balance" && $param1) {
+
+    // Sečteme hodnotu všech UTXO, které patří dané adrese a nejsou utracené
+    $stmt = $db->prepare("
+        SELECT SUM(value) as total 
+        FROM utxo 
+        WHERE owner = :addr AND spent = 0
+    ");
+
+    $stmt->bindValue(":addr", $param1, SQLITE3_TEXT);
+    $res = $stmt->execute();
+    $row = $res->fetchArray(SQLITE3_ASSOC);
+
+    $balance = $row['total'] ?? 0;
+
+    // Volitelně můžeme vytáhnout i seznam konkrétních UTXO id
+    $stmt_list = $db->prepare("
+        SELECT txid, value 
+        FROM utxo 
+        WHERE owner = :addr AND spent = 0
+    ");
+    $stmt_list->bindValue(":addr", $param1, SQLITE3_TEXT);
+    $res_list = $stmt_list->execute();
+    
+    $utxos = [];
+    while ($u = $res_list->fetchArray(SQLITE3_ASSOC)) {
+        $utxos[] = [
+            "txid" => $u['txid'],
+            "value" => intval($u['value'])
+        ];
+    }
+
+    echo json_encode([
+        "status" => "ok",
+        "address" => $param1,
+        "balance" => intval($balance),
+        "utxo_count" => count($utxos),
+        "unspent_outputs" => $utxos
+    ], JSON_PRETTY_PRINT);
+
+    exit;
+}
+
+
+//---------------------------------------
+// send_transaction
+//---------------------------------------
+if ($endpoint === "send_transaction") {
+    // Načtení dat (podpora pro JSON i klasický POST)
+    $input = json_decode(file_get_contents('php://input'), true);
+    $data = $input ? $input : $_POST;
+
+    $from      = $data['from'];
+    $to        = $data['to'];
+    $val1      = intval($data['val1']); // Hodnota v UTXO (celková)
+    $val2      = intval($data['val2']); // Kolik posílám
+    $sig       = $data['sig_hex'];
+    $utxo_txid = intval($data['utxo_txid']); // ID transakce, ze které beru
+
+    // Základní validace
+    if (empty($from) || empty($to) || empty($sig) || $utxo_txid <= 0) {
+        echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+        exit;
+    }
+
+    if ($val2 > $val1) {
+        echo json_encode(["status" => "error", "message" => "Insufficient funds in selected UTXO"]);
+        exit;
+    }
+
+    try {
+        // 1. Vložení transakce
+        $db->exec("INSERT INTO transactions (txid, prev_txid, sig, from_addr, to_addr, val1, val2, mp, utxo_time) 
+                   VALUES (0, $utxo_txid, '$sig', '$from', '$to', $val1, $val2, 1, ".time().")");
+        
+        $lastId = $db->lastInsertRowID();
+        $new_txid = $lastId + 1000;
+        $db->exec("UPDATE transactions SET txid = $new_txid WHERE rowid = $lastId");
+
+        // 2. Mark staré UTXO jako utracené
+        // Předpokládáme, že hledáme UTXO podle majitele a txid
+        $db->exec("UPDATE utxo SET spent=1 WHERE owner='$from' AND txid=$utxo_txid");
+
+        // 3. Vytvoření nového UTXO pro příjemce
+        $db->exec("INSERT INTO utxo (txid, owner, value, spent) VALUES ($new_txid, '$to', $val2, 0)");
+
+        // 4. Výpočet a vytvoření UTXO pro vrácení (change)
+        $change = $val1 - $val2;
+        if ($change > 0) {
+            $db->exec("INSERT INTO utxo (txid, owner, value, spent) VALUES ($new_txid, '$from', $change, 0)");
+        }
+
+        echo json_encode([
+            "status" => "ok",
+            "message" => "Transaction broadcasted successfully",
+            "txid" => $new_txid,
+            "details" => [
+                "sent" => $val2,
+                "change" => $change,
+                "signature" => substr($sig, 0, 8) . "..."
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        echo json_encode(["status" => "error", "message" => "Database error: " . $e->getMessage()]);
+    }
+    exit;
+}
+
+
 
 
     //---------------------------------------

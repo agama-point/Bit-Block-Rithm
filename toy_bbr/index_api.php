@@ -121,41 +121,33 @@ if ($action === "mine_tx") {
 
 
 if ($action === "mining") {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
+    if (session_status() === PHP_SESSION_NONE) { session_start(); }
     ob_clean();
     header('Content-Type: application/json');
 
     $addr = $_POST['addr'];
+    $provided_prev_hash = $_POST['prev_hash']; // Přijato z JS
     $value = 10;
     $timestamp = time();
 
-    // --- PART 1: Transaction Creation ---
-    // We set mp = 0 because it's being "mined" into a block immediately
+    // 1. Vytvoření transakce
     $db->exec("INSERT INTO transactions (txid, sig, from_addr, to_addr, val1, val2, mp, utxo_time) 
                VALUES (0, NULL, NULL, '$addr', 0, $value, 0, $timestamp)");
-    
     $lastId = $db->lastInsertRowID();
     $new_txid = $lastId + 1000;
-
     $db->exec("UPDATE transactions SET txid = $new_txid WHERE rowid = $lastId");
     $db->exec("INSERT INTO utxo (txid, owner, value, spent) VALUES ($new_txid, '$addr', $value, 0)");
 
-    // --- PART 2: Automatic Block Creation ---
-    
-    // Generate random 6-character hex hashes (simulating ASH24)
-    $random_tx_root = bin2hex(random_bytes(3));   // 6 hex chars
-    $random_prev_hash = bin2hex(random_bytes(3)); // 6 hex chars
+    // 2. Výpočet tx_root (v PHP musíme použít ekvivalent tvého ASH24/hex24, pokud ho máš, 
+    // nebo pro teď vezmeme jednoduchý hash z TXID)
+    $tx_root = substr(hash('sha256', (string)$new_txid), 0, 6); 
     $nonce = random_int(1000, 9999);
-    $tx_txt = (string)$new_txid;
+    $safe_tx_txt = SQLite3::escapeString((string)$new_txid);
 
-    $safe_tx_txt = SQLite3::escapeString($tx_txt);
-    
+    // 3. Vložení bloku s POUŽITÍM provázaného prev_hash
     $sqlBlock = "
         INSERT INTO blockchain (prev_hash, tx_root, nonce, timestamp, tx_txt, note_block, k)
-        VALUES ('$random_prev_hash', '$random_tx_root', $nonce, $timestamp, '$safe_tx_txt', 'Auto Coinbase', '')
+        VALUES ('$provided_prev_hash', '$tx_root', $nonce, $timestamp, '$safe_tx_txt', 'Coinbase Linked', '')
     ";
 
     if (!$db->exec($sqlBlock)) {
@@ -165,26 +157,19 @@ if ($action === "mining") {
 
     $new_block_id = $db->lastInsertRowID();
 
-    // --- PART 3: Session Delay Logic ---
-    if (!isset($_SESSION['minerdelay'])) {
-        $_SESSION['minerdelay'] = 5;
-    }
-    $_SESSION['minerdelay'] = intval($_SESSION['minerdelay']) * 2;
+    // Delay logika
+    $_SESSION['minerdelay'] = intval($_SESSION['minerdelay'] ?? 5) * 2;
     session_write_close(); 
 
-    // Return complete data to Frontend
     echo json_encode([
         "status" => "success",
         "txid" => $new_txid,
         "block_id" => $new_block_id,
-        "tx_root" => $random_tx_root,
-        "prev_hash" => $random_prev_hash,
-        "new_delay" => $_SESSION['minerdelay'],
-        "msg" => "Transaction $new_txid created and sealed in Block #$new_block_id"
+        "tx_root" => $tx_root,
+        "new_delay" => $_SESSION['minerdelay']
     ]);
     exit;
 }
-
 //-----------------------------------------------------------
 if ($action === "mining_ok") {
     // Start session if not already started

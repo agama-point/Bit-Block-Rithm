@@ -32,8 +32,10 @@
 <div class="flex-right">
    
    <?php 
-   include "show_sys.php";?>
+   include "show_sys.php";
    
+?>
+      
 </div>
 </div>
 

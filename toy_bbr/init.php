@@ -1,4 +1,24 @@
 <?php
+
+$file0 = 'pristupy.db';
+$db = new SQLite3($file0);
+
+$db->exec("
+CREATE TABLE IF NOT EXISTS logs (
+    uid INTEGER PRIMARY KEY,
+    ip TEXT NOT NULL,
+    note TEXT,
+    ver TEXT,
+    x1 INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+");
+
+echo "Database file <b>$file0</b> is present or has just been created.<br />";
+
+
+
+
 /**
  * init.php
  * Initializes SQLite database structures and seed data.

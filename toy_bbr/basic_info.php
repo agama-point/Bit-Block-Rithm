@@ -72,9 +72,11 @@ working with the coins
     <div id="techInfo" class="info-box">
 
 <div>
-<img src="svg/bbr_keys.svg" alt="Blockchain" width="650">
+<img class="w800" src="svg/bbr_keys.svg?v2" alt="Keys">
 <br />
-<img src="svg/bbr_block.svg" alt="Blockchain" width="650">
+<img class="w800" src="svg/bbr_tx.svg?v2" alt="Transaction">
+<br />
+<img class="w800" src="svg/bbr_block.svg?v2" alt="Blockchain">
 </div>
 
 <pre>
@@ -90,6 +92,25 @@ block_hash = ash24(block_ID|timestamp|TX_ROOT)
 Current Network Difficulty: 1 (k)
 Hash Algorithm: ASH24-ECC
 ---------------------------------------------
+secp256k1:
+Gx:0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+Gy:0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+p = (2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 -1)
+  = (2**256 - 2**32 - 977)
+  = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+  = 115792089237316195423570985008687907852837564279074904382605163141518161494337
+---------------------------------------------
+ess251:
+G = [10,76]
+p = 251
+---------------------------------------------
+
+
+
+<img class="w800" src="svg/bbr_sign.svg?v2" alt="Sign/Verify">
+
+<img class="w800" src="svg/bbr_script.svg?v2" alt="Sign/Verify">
+
 </pre>
     </div>
 </div>
