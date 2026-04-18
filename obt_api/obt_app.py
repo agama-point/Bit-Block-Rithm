@@ -31,12 +31,21 @@ class WorkerThread(QObject):
     connected_signal = pyqtSignal(bool)       # Connection state
     address_received_signal = pyqtSignal(str) # Public key/address from device
     balance_received_signal = pyqtSignal(dict) # Balance data from API
+    signature_received_signal = pyqtSignal(str) # Signature from device
+    transaction_broadcast_signal = pyqtSignal(dict) # Broadcast result
     
     def __init__(self):
         super().__init__()
         self._serial: Optional[serial.Serial] = None
         self._device_address: str = ""
         self._debug_mode: bool = False
+        
+        # Transaction data for broadcast
+        self._tx_from: str = ""
+        self._tx_to: str = ""
+        self._tx_utxo_txid: str = ""
+        self._tx_value: int = 0
+        self._tx_signature: str = ""
     
     # ------------------------------------------------------------------ #
     #  UART operations                                                     #
@@ -205,11 +214,204 @@ class WorkerThread(QObject):
     
     @pyqtSlot(str, str, list)
     def send_transaction(self, to_address: str, from_address: str, selected_utxos: list):
-        """Placeholder for sending transaction (dummy for now)"""
-        self._log(f"📨 DUMMY: Sending to {to_address}", color="#ff9800")
-        self._log(f"  From address: {from_address}", color="#888")
-        self._log(f"  Selected UTXOs: {len(selected_utxos)}", color="#888")
-        self._log("  ⚠️ Function not implemented yet", color="#666")
+        """Build transaction and send for signing"""
+        
+        # Validate: exactly one UTXO must be selected
+        if len(selected_utxos) == 0:
+            self._log("⚠️ No UTXO selected! Please select exactly one.", color="#f44336")
+            return
+        
+        if len(selected_utxos) > 1:
+            self._log("⚠️ Multiple UTXOs selected! Please select exactly one.", color="#f44336")
+            return
+        
+        # Extract UTXO data
+        utxo = selected_utxos[0]
+        txid = str(utxo.get("txid", ""))
+        value = utxo.get("value", 0)
+        
+        # Store transaction data for later broadcast
+        self._tx_from = from_address
+        self._tx_to = to_address
+        self._tx_utxo_txid = txid
+        self._tx_value = value
+        self._tx_signature = ""  # Will be filled when signature arrives
+        
+        # Build transaction string: FROM|TXID|TO|VALUE
+        tx_string = f"{from_address}|{txid}|{to_address}|{value}"
+        
+        self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+        self._log("📝 <b>Building Transaction</b>", color="#2196f3")
+        self._log(f"  From:  <b>{from_address}</b>", color="#888")
+        self._log(f"  TXID:  <b>{txid}</b>", color="#888")
+        self._log(f"  To:    <b>{to_address}</b>", color="#888")
+        self._log(f"  Value: <b>{value}</b> units", color="#888")
+        self._log(f"  TX String: <b>{tx_string}</b>", color="#ffb300")
+        
+        # Send for signing via UART
+        if not self._serial or not self._serial.is_open:
+            self._log("❌ Not connected to device!", color="#f44336")
+            return
+        
+        try:
+            # Create sign command
+            command = {"sign": tx_string}
+            json_command = json.dumps(command) + "\n"
+            
+            self._log("📤 Sending to device for signature...", color="#2196f3")
+            if self._debug_mode:
+                self._log(f"  TX: {json_command.strip()}", color="#666")
+            
+            self._serial.write(json_command.encode('utf-8'))
+            
+            # Read response
+            found_signature = False
+            start_time = time.time()
+            
+            while (time.time() - start_time) < 10:  # 10 second timeout
+                line = self._serial.readline().decode('utf-8', errors='ignore').strip()
+                if line:
+                    if self._debug_mode:
+                        self._log(f"  RX: {line}", color="#666")
+                    
+                    # Ignore debug outputs from ESP32
+                    if line.startswith("::"):
+                        # Log ASH24 hash and signature info
+                        self._log(f"  {line}", color="#666")
+                        continue
+                    
+                    # Try to parse JSON response
+                    try:
+                        response = json.loads(line)
+                        if "sig_res" in response:
+                            signature = response["sig_res"]
+                            self._log(f"✓ <b>Signature received:</b>", color="#4caf50")
+                            self._log(f"  {signature}", color="#4caf50")
+                            
+                            # Store signature for broadcast
+                            self._tx_signature = signature
+                            
+                            self.signature_received_signal.emit(signature)
+                            found_signature = True
+                            break
+                    except json.JSONDecodeError:
+                        # Not JSON, might be other output
+                        if line and not line.startswith("READY"):
+                            self._log(f"  Device: {line}", color="#888")
+            
+            if not found_signature:
+                self._log("⚠️ Device did not return signature in time", color="#f44336")
+            
+            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+                
+        except Exception as e:
+            self._log(f"❌ Error during signing: {e}", color="#f44336")
+    
+    @pyqtSlot()
+    def broadcast_transaction(self):
+        """Broadcast signed transaction to blockchain API"""
+        
+        # Validate we have all necessary data
+        if not self._tx_from or not self._tx_to:
+            self._log("❌ No transaction data available. Build and sign a transaction first!", color="#f44336")
+            return
+        
+        if not self._tx_signature:
+            self._log("❌ No signature available. Sign the transaction first!", color="#f44336")
+            return
+        
+        # Build payload for API
+        payload = {
+            "from": self._tx_from,
+            "utxo_txid": self._tx_utxo_txid,
+            "to": self._tx_to,
+            "val1": self._tx_value,
+            "val2": self._tx_value,  # Full amount (no change for now)
+            "sig_hex": self._tx_signature
+        }
+        
+        url = "https://www.agamapoint.com/bbr/index.php?route=send_transaction"
+        
+        self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+        self._log("📡 <b>Broadcasting Transaction to Blockchain</b>", color="#2196f3")
+        self._log(f"  From:      <b>{self._tx_from}</b>", color="#888")
+        self._log(f"  UTXO TXID: <b>{self._tx_utxo_txid}</b>", color="#888")
+        self._log(f"  To:        <b>{self._tx_to}</b>", color="#888")
+        self._log(f"  Value:     <b>{self._tx_value}</b> units", color="#888")
+        self._log(f"  Signature: <b>{self._tx_signature[:32]}...</b>", color="#888")
+        
+        if self._debug_mode:
+            self._log(f"  API URL: {url}", color="#666")
+            self._log(f"  Payload: {json.dumps(payload, indent=2)}", color="#666")
+        
+        try:
+            self._log("⏳ Sending POST request to API...", color="#ffb300")
+            response = requests.post(url, json=payload, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+            
+            if self._debug_mode:
+                self._log(f"  API Response: {json.dumps(data, indent=2)}", color="#666")
+            
+            if data.get("status") == "ok":
+                txid = data.get("txid", "N/A")
+                message = data.get("message", "Transaction broadcasted successfully")
+                
+                self._log(f"✓ <b>SUCCESS:</b> {message}", color="#4caf50")
+                self._log(f"  <b>New TXID:</b> {txid}", color="#4caf50")
+                
+                # Emit success signal
+                self.transaction_broadcast_signal.emit({
+                    "status": "ok", 
+                    "txid": txid, 
+                    "message": message
+                })
+                
+                # Refresh balance after successful broadcast
+                self._log("⏳ Refreshing balance in 1 second...", color="#888")
+                time.sleep(1)
+                
+                if self._tx_from:
+                    self.get_balance(self._tx_from)
+                
+            else:
+                message = data.get("message", "Unknown error from API")
+                self._log(f"❌ <b>API ERROR:</b> {message}", color="#f44336")
+                
+                # Log verbose details if available
+                if "error" in data:
+                    self._log(f"  Error details: {data['error']}", color="#f44336")
+                
+                self.transaction_broadcast_signal.emit({
+                    "status": "error", 
+                    "message": message
+                })
+            
+            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            
+        except requests.exceptions.Timeout:
+            self._log("❌ <b>Timeout</b> - API did not respond in time (15s)", color="#f44336")
+            self.transaction_broadcast_signal.emit({
+                "status": "error", 
+                "message": "API timeout"
+            })
+            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            
+        except requests.exceptions.RequestException as e:
+            self._log(f"❌ <b>Network error:</b> {e}", color="#f44336")
+            self.transaction_broadcast_signal.emit({
+                "status": "error", 
+                "message": f"Network error: {e}"
+            })
+            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            
+        except json.JSONDecodeError as e:
+            self._log(f"❌ <b>Invalid JSON response</b> from API: {e}", color="#f44336")
+            self.transaction_broadcast_signal.emit({
+                "status": "error", 
+                "message": "Invalid API response (not JSON)"
+            })
+            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
     
     # ------------------------------------------------------------------ #
     #  Utility                                                             #

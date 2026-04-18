@@ -4,9 +4,9 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QPushButton, QCheckBox, QLineEdit, QLabel,
-    QTextBrowser, QGroupBox, QComboBox, QScrollArea,
+    QTextBrowser, QGroupBox, QComboBox, QScrollArea, QMessageBox,
 )
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QMetaObject
 from PyQt6.QtGui import QFont
 
 
@@ -25,6 +25,8 @@ class MainWindow(QWidget):
         self._worker.connected_signal.connect(self._on_connection_changed)
         self._worker.address_received_signal.connect(self._set_device_address)
         self._worker.balance_received_signal.connect(self._display_balance)
+        self._worker.signature_received_signal.connect(self._on_signature_received)
+        self._worker.transaction_broadcast_signal.connect(self._on_broadcast_result)
 
         self._utxo_checkboxes = []  # Store checkboxes for UTXOs
 
@@ -191,7 +193,7 @@ class MainWindow(QWidget):
         return grp
 
     def _group_payment(self) -> QGroupBox:
-        """Payment – send transaction (dummy)"""
+        """Payment – sign and broadcast transaction"""
         grp = QGroupBox("Payment")
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
@@ -201,6 +203,7 @@ class MainWindow(QWidget):
         to_lbl = QLabel("To:")
         to_lbl.setFixedWidth(60)
         self.to_input = QLineEdit()
+        self.to_input.setText("7214")  # Pre-fill with default target
         self.to_input.setPlaceholderText("Recipient address…")
         self.to_input.setFont(QFont("Monospace", 9))
         self.to_input.setEnabled(False)
@@ -208,17 +211,21 @@ class MainWindow(QWidget):
         to_row.addWidget(self.to_input, stretch=1)
         lay.addLayout(to_row)
 
-        # Send button
-        self.send_btn = QPushButton("Send  ➤")
-        self.send_btn.setEnabled(False)
-        self.send_btn.clicked.connect(self._on_send_payment)
-        lay.addWidget(self.send_btn)
-
-        # Dummy notice
-        notice = QLabel("⚠️ Dummy – not implemented yet")
-        notice.setStyleSheet("color: #ff9800; font-style: italic; font-size: 10px;")
-        notice.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(notice)
+        # Two separate buttons: Sign and Broadcast
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(6)
+        
+        self.sign_btn = QPushButton("🔏 Sign Transaction")
+        self.sign_btn.setEnabled(False)
+        self.sign_btn.clicked.connect(self._on_sign_transaction)
+        
+        self.broadcast_btn = QPushButton("📡 Broadcast")
+        self.broadcast_btn.setEnabled(False)
+        self.broadcast_btn.clicked.connect(self._on_broadcast_transaction)
+        
+        btn_row.addWidget(self.sign_btn, stretch=1)
+        btn_row.addWidget(self.broadcast_btn, stretch=1)
+        lay.addLayout(btn_row)
 
         return grp
 
@@ -292,12 +299,49 @@ class MainWindow(QWidget):
         # Enable balance & payment controls when connected
         self.get_balance_btn.setEnabled(connected)
         self.to_input.setEnabled(connected)
-        self.send_btn.setEnabled(connected)
+        self.sign_btn.setEnabled(connected)
+        
+        # Broadcast starts disabled until signature is received
+        if not connected:
+            self.broadcast_btn.setEnabled(False)
 
     @pyqtSlot(str)
     def _set_device_address(self, address: str):
         """Display received device address"""
         self.addr_label.setText(address)
+
+    @pyqtSlot(str)
+    def _on_signature_received(self, signature: str):
+        """Handle received signature from device"""
+        # Enable broadcast button when signature is received
+        self.broadcast_btn.setEnabled(True)
+        
+        # Optional: Show a subtle notification
+        # (The signature is already logged verbosely by the worker)
+
+    @pyqtSlot(dict)
+    def _on_broadcast_result(self, result: dict):
+        """Handle broadcast transaction result"""
+        if result.get("status") == "ok":
+            txid = result.get("txid", "N/A")
+            message = result.get("message", "Transaction broadcasted successfully")
+            
+            QMessageBox.information(
+                self,
+                "✓ Broadcast Success",
+                f"{message}\n\nNew TXID:\n{txid}"
+            )
+            
+            # Disable broadcast button after successful send
+            self.broadcast_btn.setEnabled(False)
+            
+        else:
+            message = result.get("message", "Unknown error")
+            QMessageBox.warning(
+                self,
+                "❌ Broadcast Failed",
+                f"Transaction broadcast failed:\n\n{message}"
+            )
 
     @pyqtSlot(dict)
     def _display_balance(self, data: dict):
@@ -352,10 +396,14 @@ class MainWindow(QWidget):
         if address and address != "—":
             self._worker.get_balance(address)
 
-    def _on_send_payment(self):
-        """Dummy handler for sending payment"""
+    def _on_sign_transaction(self):
+        """Sign transaction with device"""
         to_addr = self.to_input.text().strip()
         from_addr = self.addr_label.text()
+        
+        if not to_addr:
+            QMessageBox.warning(self, "Input Error", "Please enter recipient address")
+            return
         
         # Collect selected UTXOs
         selected = []
@@ -363,10 +411,28 @@ class MainWindow(QWidget):
             if cb.isChecked():
                 selected.append(cb.property("utxo_data"))
         
-        if not to_addr:
+        if not selected:
+            QMessageBox.warning(self, "Selection Error", "Please select exactly one UTXO to spend")
             return
         
+        if len(selected) > 1:
+            QMessageBox.warning(self, "Selection Error", "Please select exactly ONE UTXO (multiple inputs not supported)")
+            return
+        
+        # Disable broadcast button before signing (will be re-enabled when signature arrives)
+        self.broadcast_btn.setEnabled(False)
+        
+        # Call worker to sign
         self._worker.send_transaction(to_addr, from_addr, selected)
+
+    def _on_broadcast_transaction(self):
+        """Broadcast signed transaction to blockchain"""
+        # Call worker to broadcast
+        QMetaObject.invokeMethod(
+            self._worker,
+            "broadcast_transaction",
+            Qt.ConnectionType.QueuedConnection
+        )
 
     # ------------------------------------------------------------------ #
     #  Themes                                                              #
