@@ -1,5 +1,5 @@
 # obt_ui.py
-# UI vrstva pro OBT aplikaci
+# UI layer for OBT application
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
@@ -18,7 +18,7 @@ class MainWindow(QWidget):
         self.resize(1000, 700)
         self.setMinimumWidth(800)
 
-        # Připojení signálů z workera
+        # Connect signals from worker
         self._worker.log_signal.connect(self._append_log)
         self._worker.status_signal.connect(self._set_status)
         self._worker.ports_found_signal.connect(self._update_port_list)
@@ -26,7 +26,7 @@ class MainWindow(QWidget):
         self._worker.address_received_signal.connect(self._set_device_address)
         self._worker.balance_received_signal.connect(self._display_balance)
 
-        self._utxo_checkboxes = []  # Uložení checkboxů pro UTXOs
+        self._utxo_checkboxes = []  # Store checkboxes for UTXOs
 
         self._build_ui()
         self.apply_dark_theme()
@@ -87,7 +87,7 @@ class MainWindow(QWidget):
         return panel
 
     def _group_uart(self) -> QGroupBox:
-        """UART – skenování a výběr portu"""
+        """UART – scanning and port selection"""
         grp = QGroupBox("UART")
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
@@ -121,7 +121,7 @@ class MainWindow(QWidget):
         return grp
 
     def _group_connection(self) -> QGroupBox:
-        """Connection – připojení a zobrazení adresy"""
+        """Connection – connect and display address"""
         grp = QGroupBox("Connection")
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
@@ -147,7 +147,7 @@ class MainWindow(QWidget):
         return grp
 
     def _group_balance(self) -> QGroupBox:
-        """Balance – tlačítko Get Balance a seznam UTXOs"""
+        """Balance – Get Balance button and UTXO list"""
         grp = QGroupBox("Balance")
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
@@ -191,7 +191,7 @@ class MainWindow(QWidget):
         return grp
 
     def _group_payment(self) -> QGroupBox:
-        """Payment – odeslání transakce (dummy)"""
+        """Payment – send transaction (dummy)"""
         grp = QGroupBox("Payment")
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
@@ -226,10 +226,9 @@ class MainWindow(QWidget):
         """Debug toggle"""
         grp = QGroupBox("Debug")
         lay = QVBoxLayout(grp)
+        lay.setSpacing(2)
 
-        self.debug_checkbox = QCheckBox("Verbose DEBUG output")
-        self.debug_checkbox.setChecked(False)
-        self.debug_checkbox.setToolTip("Show detailed UART and API diagnostics")
+        self.debug_checkbox = QCheckBox("Enable verbose logging")
         self.debug_checkbox.stateChanged.connect(
             lambda state: self._worker.set_debug_mode(state == Qt.CheckState.Checked.value)
         )
@@ -264,7 +263,7 @@ class MainWindow(QWidget):
     # ------------------------------------------------------------------ #
     @pyqtSlot(str)
     def _append_log(self, html_msg: str):
-        """Přidá zprávu do logu"""
+        """Append message to log"""
         self.log_box.append(html_msg)
         self.log_box.verticalScrollBar().setValue(
             self.log_box.verticalScrollBar().maximum()
@@ -272,7 +271,7 @@ class MainWindow(QWidget):
 
     @pyqtSlot(list)
     def _update_port_list(self, ports: list):
-        """Aktualizuje seznam nalezených portů"""
+        """Update list of found ports"""
         self.port_combo.clear()
         if ports:
             for device, description in ports:
@@ -285,7 +284,7 @@ class MainWindow(QWidget):
 
     @pyqtSlot(bool)
     def _on_connection_changed(self, connected: bool):
-        """Reakce na změnu stavu připojení"""
+        """React to connection state change"""
         self.connect_btn.setText("Disconnect" if connected else "Connect")
         self.scan_btn.setEnabled(not connected)
         self.port_combo.setEnabled(not connected)
@@ -297,12 +296,12 @@ class MainWindow(QWidget):
 
     @pyqtSlot(str)
     def _set_device_address(self, address: str):
-        """Zobrazí přijatou adresu zařízení"""
+        """Display received device address"""
         self.addr_label.setText(address)
 
     @pyqtSlot(dict)
     def _display_balance(self, data: dict):
-        """Zobrazí balance a UTXOs"""
+        """Display balance and UTXOs"""
         balance = data.get("balance", 0)
         self.balance_label.setText(f"{balance} units")
         
@@ -314,7 +313,8 @@ class MainWindow(QWidget):
         # Add new UTXOs
         utxos = data.get("unspent_outputs", [])
         for utxo in utxos:
-            txid = utxo.get("txid", "")
+            # FIX: Convert txid to string to handle integer values from API
+            txid = str(utxo.get("txid", ""))
             value = utxo.get("value", 0)
             
             cb = QCheckBox(f"{txid[:20]}... | {value} units")
@@ -326,7 +326,7 @@ class MainWindow(QWidget):
 
     @pyqtSlot(str)
     def _set_status(self, text: str):
-        """Nastaví status label"""
+        """Set status label"""
         colors = {
             "Connected":    "#4caf50",
             "Scanning …":   "#ffb300",
@@ -338,7 +338,7 @@ class MainWindow(QWidget):
         self.status_label.setStyleSheet(f"color: {color}; font-weight: bold;")
 
     def _toggle_connection(self):
-        """Přepne stav připojení"""
+        """Toggle connection state"""
         if self.connect_btn.text() == "Connect":
             selected_port = self.port_combo.currentData()
             if selected_port:
@@ -347,13 +347,13 @@ class MainWindow(QWidget):
             self._worker.disconnect_port()
 
     def _on_get_balance(self):
-        """Zavolá worker pro získání balance"""
+        """Call worker to get balance"""
         address = self.addr_label.text()
         if address and address != "—":
             self._worker.get_balance(address)
 
     def _on_send_payment(self):
-        """Dummy handler pro odeslání platby"""
+        """Dummy handler for sending payment"""
         to_addr = self.to_input.text().strip()
         from_addr = self.addr_label.text()
         
