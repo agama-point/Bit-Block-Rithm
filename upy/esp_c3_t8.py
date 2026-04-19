@@ -9,7 +9,7 @@ from obt.ess251 import scalar_mult, signToy, verifyToy, G_POINT, pubkey_to_addr,
 from obt.ash24 import ASH24, bytes_to_bin24, print_bit_hash
 
 
-ver = "t8_2603 :: 0.31"
+ver = "esp_c3_t8 | 26/03 :: 0.32"
 
 # Setup LEDs
 l1 = Led(8) # 14
@@ -121,7 +121,8 @@ while True:
                 data = ujson.loads(line)
 
                 if "get" in data and data["get"] == "ver":     
-                    print(ver)
+#                   # print(ver)
+                    print(ujson.dumps({"res_ver": ver}))
 
                 if "get" in data and data["get"] == "addr":     
                     print(t8pub)
@@ -159,3 +160,4 @@ while True:
             except ValueError:
                 print(":: Invalid JSON")
                
+
