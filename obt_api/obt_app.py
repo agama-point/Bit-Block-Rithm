@@ -212,8 +212,8 @@ class WorkerThread(QObject):
         except json.JSONDecodeError:
             self._log("❌ API returned invalid JSON", color="#f44336")
     
-    @pyqtSlot(str, str, list)
-    def send_transaction(self, to_address: str, from_address: str, selected_utxos: list):
+    @pyqtSlot(str, str, list, int)
+    def send_transaction(self, to_address: str, from_address: str, selected_utxos: list, send_value: int):
         """Build transaction and send for signing"""
         
         # Validate: exactly one UTXO must be selected
@@ -228,24 +228,37 @@ class WorkerThread(QObject):
         # Extract UTXO data
         utxo = selected_utxos[0]
         txid = str(utxo.get("txid", ""))
-        value = utxo.get("value", 0)
+        utxo_value = utxo.get("value", 0)
+        
+        # Validate send_value
+        if send_value <= 0:
+            self._log("⚠️ Send value must be greater than 0!", color="#f44336")
+            return
+        
+        if send_value > utxo_value:
+            self._log(f"⚠️ Send value ({send_value}) cannot be greater than UTXO value ({utxo_value})!", color="#f44336")
+            return
         
         # Store transaction data for later broadcast
         self._tx_from = from_address
         self._tx_to = to_address
         self._tx_utxo_txid = txid
-        self._tx_value = value
+        self._tx_value = send_value  # Use the specified send_value, not the full UTXO
         self._tx_signature = ""  # Will be filled when signature arrives
         
         # Build transaction string: FROM|TXID|TO|VALUE
-        tx_string = f"{from_address}|{txid}|{to_address}|{value}"
+        tx_string = f"{from_address}|{txid}|{to_address}|{send_value}"
         
         self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
         self._log("📝 <b>Building Transaction</b>", color="#2196f3")
-        self._log(f"  From:  <b>{from_address}</b>", color="#888")
-        self._log(f"  TXID:  <b>{txid}</b>", color="#888")
-        self._log(f"  To:    <b>{to_address}</b>", color="#888")
-        self._log(f"  Value: <b>{value}</b> units", color="#888")
+        self._log(f"  From:       <b>{from_address}</b>", color="#888")
+        self._log(f"  TXID:       <b>{txid}</b>", color="#888")
+        self._log(f"  To:         <b>{to_address}</b>", color="#888")
+        self._log(f"  UTXO Value: <b>{utxo_value}</b> units", color="#888")
+        self._log(f"  Send Value: <b>{send_value}</b> units", color="#4caf50")
+        if send_value < utxo_value:
+            change = utxo_value - send_value
+            self._log(f"  Change:     <b>{change}</b> units (will be lost - no change address)", color="#ffb300")
         self._log(f"  TX String: <b>{tx_string}</b>", color="#ffb300")
         
         # Send for signing via UART
@@ -326,7 +339,7 @@ class WorkerThread(QObject):
             "utxo_txid": self._tx_utxo_txid,
             "to": self._tx_to,
             "val1": self._tx_value,
-            "val2": self._tx_value,  # Full amount (no change for now)
+            "val2": self._tx_value,  # Send amount (change is lost if val < UTXO value)
             "sig_hex": self._tx_signature
         }
         

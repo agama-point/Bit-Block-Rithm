@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QPushButton, QCheckBox, QLineEdit, QLabel,
     QTextBrowser, QGroupBox, QComboBox, QScrollArea, QMessageBox,
+    QRadioButton, QButtonGroup,
 )
 from PyQt6.QtCore import Qt, pyqtSlot, QMetaObject
 from PyQt6.QtGui import QFont
@@ -29,6 +30,7 @@ class MainWindow(QWidget):
         self._worker.transaction_broadcast_signal.connect(self._on_broadcast_result)
 
         self._utxo_checkboxes = []  # Store checkboxes for UTXOs
+        self._current_font_size = 11  # Default font size
 
         self._build_ui()
         self.apply_dark_theme()
@@ -45,11 +47,14 @@ class MainWindow(QWidget):
         splitter.setHandleWidth(6)
 
         left_panel = self._build_left_panel()
-        left_panel.setFixedWidth(380)
         right_panel = self._build_right_panel()
 
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
+        
+        # Set initial sizes (left panel narrower, right panel wider)
+        # Total width ~1000, left gets 300, right gets 700
+        splitter.setSizes([300, 700])
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
 
@@ -61,12 +66,35 @@ class MainWindow(QWidget):
         clear_btn.clicked.connect(self.log_box.clear)
         clear_btn.setFixedWidth(100)
 
+        # Font size selector
+        font_size_label = QLabel("Font size:")
+        
+        self.font_size_group = QButtonGroup(self)
+        self.font_radio_1 = QRadioButton("1")
+        self.font_radio_2 = QRadioButton("2")
+        self.font_radio_3 = QRadioButton("3")
+        
+        self.font_size_group.addButton(self.font_radio_1, 1)
+        self.font_size_group.addButton(self.font_radio_2, 2)
+        self.font_size_group.addButton(self.font_radio_3, 3)
+        
+        self.font_radio_1.setChecked(True)  # Default: size 1 (11pt)
+        
+        self.font_radio_1.toggled.connect(lambda: self._change_font_size(11))
+        self.font_radio_2.toggled.connect(lambda: self._change_font_size(15))
+        self.font_radio_3.toggled.connect(lambda: self._change_font_size(31))
+
         self.theme_toggle = QCheckBox("Dark mode")
         self.theme_toggle.setChecked(True)
         self.theme_toggle.stateChanged.connect(self._toggle_theme)
 
         bottom.addWidget(clear_btn)
         bottom.addStretch()
+        bottom.addWidget(font_size_label)
+        bottom.addWidget(self.font_radio_1)
+        bottom.addWidget(self.font_radio_2)
+        bottom.addWidget(self.font_radio_3)
+        bottom.addSpacing(20)
         bottom.addWidget(self.theme_toggle)
         root.addLayout(bottom)
 
@@ -114,7 +142,7 @@ class MainWindow(QWidget):
         port_lbl = QLabel("Port:")
         port_lbl.setFixedWidth(42)
         self.port_combo = QComboBox()
-        self.port_combo.setFont(QFont("Monospace", 9))
+        self.port_combo.setFont(QFont("Monospace"))
         self.port_combo.setEnabled(False)
         port_row.addWidget(port_lbl)
         port_row.addWidget(self.port_combo, stretch=1)
@@ -133,7 +161,7 @@ class MainWindow(QWidget):
         addr_lbl = QLabel("Address:")
         addr_lbl.setFixedWidth(60)
         self.addr_label = QLabel("—")
-        self.addr_label.setFont(QFont("Monospace", 9))
+        self.addr_label.setFont(QFont("Monospace"))
         self.addr_label.setWordWrap(True)
         self.addr_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         addr_row.addWidget(addr_lbl)
@@ -159,7 +187,7 @@ class MainWindow(QWidget):
         bal_lbl = QLabel("Balance:")
         bal_lbl.setFixedWidth(60)
         self.balance_label = QLabel("—")
-        self.balance_label.setFont(QFont("Monospace", 10, QFont.Weight.Bold))
+        self.balance_label.setFont(QFont("Monospace", -1, QFont.Weight.Bold))
         bal_row.addWidget(bal_lbl)
         bal_row.addWidget(self.balance_label, stretch=1)
         lay.addLayout(bal_row)
@@ -172,13 +200,15 @@ class MainWindow(QWidget):
 
         # UTXOs label
         utxo_lbl = QLabel("UTXOs (select to spend):")
-        utxo_lbl.setStyleSheet("color: #888; font-size: 10px;")
+        utxo_lbl.setObjectName("smallLabel")
+        utxo_lbl.setStyleSheet("color: #888;")
         lay.addWidget(utxo_lbl)
 
         # Scrollable area for UTXOs
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setMaximumHeight(150)
+        # scroll.setMaximumHeight(200)
+        scroll.setFixedHeight(210)
         scroll.setStyleSheet("QScrollArea { border: 1px solid #555; border-radius: 4px; }")
         
         self.utxo_container = QWidget()
@@ -198,6 +228,19 @@ class MainWindow(QWidget):
         lay = QVBoxLayout(grp)
         lay.setSpacing(6)
 
+        # Value to send
+        value_row = QHBoxLayout()
+        value_lbl = QLabel("Value:")
+        value_lbl.setFixedWidth(60)
+        self.value_input = QLineEdit()
+        self.value_input.setText("1")  # Default: 1 unit
+        self.value_input.setPlaceholderText("Amount to send…")
+        self.value_input.setFont(QFont("Monospace"))
+        self.value_input.setEnabled(False)
+        value_row.addWidget(value_lbl)
+        value_row.addWidget(self.value_input, stretch=1)
+        lay.addLayout(value_row)
+
         # To address
         to_row = QHBoxLayout()
         to_lbl = QLabel("To:")
@@ -205,7 +248,7 @@ class MainWindow(QWidget):
         self.to_input = QLineEdit()
         self.to_input.setText("7214")  # Pre-fill with default target
         self.to_input.setPlaceholderText("Recipient address…")
-        self.to_input.setFont(QFont("Monospace", 9))
+        self.to_input.setFont(QFont("Monospace"))
         self.to_input.setEnabled(False)
         to_row.addWidget(to_lbl)
         to_row.addWidget(self.to_input, stretch=1)
@@ -253,13 +296,14 @@ class MainWindow(QWidget):
         layout.setSpacing(4)
 
         log_label = QLabel("Verbose Log")
-        log_label.setFont(QFont("Monospace", 8))
+        log_label.setObjectName("smallLabel")
+        log_label.setFont(QFont("Monospace"))
         log_label.setStyleSheet("color: #888;")
         layout.addWidget(log_label)
 
         self.log_box = QTextBrowser()
         self.log_box.setReadOnly(True)
-        self.log_box.setFont(QFont("Monospace", 9))
+        self.log_box.setFont(QFont("Monospace"))
         self.log_box.setOpenExternalLinks(False)
         layout.addWidget(self.log_box, stretch=1)
 
@@ -298,6 +342,7 @@ class MainWindow(QWidget):
         
         # Enable balance & payment controls when connected
         self.get_balance_btn.setEnabled(connected)
+        self.value_input.setEnabled(connected)
         self.to_input.setEnabled(connected)
         self.sign_btn.setEnabled(connected)
         
@@ -362,7 +407,7 @@ class MainWindow(QWidget):
             value = utxo.get("value", 0)
             
             cb = QCheckBox(f"{txid[:20]}... | {value} units")
-            cb.setFont(QFont("Monospace", 8))
+            cb.setFont(QFont("Monospace"))
             cb.setProperty("utxo_data", utxo)
             
             self._utxo_checkboxes.append(cb)
@@ -405,6 +450,18 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "Input Error", "Please enter recipient address")
             return
         
+        # Validate value
+        value_text = self.value_input.text().strip()
+        try:
+            send_value = int(value_text)
+        except ValueError:
+            QMessageBox.warning(self, "Input Error", "Value must be a valid integer")
+            return
+        
+        if send_value <= 0:
+            QMessageBox.warning(self, "Input Error", "Value must be greater than 0")
+            return
+        
         # Collect selected UTXOs
         selected = []
         for cb in self._utxo_checkboxes:
@@ -419,11 +476,21 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "Selection Error", "Please select exactly ONE UTXO (multiple inputs not supported)")
             return
         
+        # Validate value against selected UTXO
+        utxo_value = selected[0].get("value", 0)
+        if send_value > utxo_value:
+            QMessageBox.warning(
+                self, 
+                "Input Error", 
+                f"Value ({send_value}) cannot be greater than UTXO value ({utxo_value})"
+            )
+            return
+        
         # Disable broadcast button before signing (will be re-enabled when signature arrives)
         self.broadcast_btn.setEnabled(False)
         
-        # Call worker to sign
-        self._worker.send_transaction(to_addr, from_addr, selected)
+        # Call worker to sign with specified value
+        self._worker.send_transaction(to_addr, from_addr, selected, send_value)
 
     def _on_broadcast_transaction(self):
         """Broadcast signed transaction to blockchain"""
@@ -437,6 +504,16 @@ class MainWindow(QWidget):
     # ------------------------------------------------------------------ #
     #  Themes                                                              #
     # ------------------------------------------------------------------ #
+    def _change_font_size(self, size: int):
+        """Change font size for entire application"""
+        if self.sender() and self.sender().isChecked():
+            self._current_font_size = size
+            # Reapply current theme to update font size
+            if self.theme_toggle.isChecked():
+                self.apply_dark_theme()
+            else:
+                self.apply_light_theme()
+    
     def _toggle_theme(self):
         if self.theme_toggle.isChecked():
             self.apply_dark_theme()
@@ -444,82 +521,140 @@ class MainWindow(QWidget):
             self.apply_light_theme()
 
     def apply_dark_theme(self):
-        self.setStyleSheet("""
-            QWidget { background: #2b2b2b; color: #e0e0e0; }
-            QGroupBox {
+        # Calculate related sizes based on font size
+        base_size = self._current_font_size
+        small_size = max(8, int(base_size * 0.73))  # ~8pt for 11pt base
+        mono_size = max(9, int(base_size * 0.82))   # ~9pt for 11pt base
+        bold_size = max(10, int(base_size * 0.91))  # ~10pt for 11pt base
+        
+        self.setStyleSheet(f"""
+            QWidget {{ 
+                background: #2b2b2b; 
+                color: #e0e0e0;
+                font-size: {base_size}pt;
+            }}
+            QGroupBox {{
                 border: 1px solid #444;
                 border-radius: 6px;
                 margin-top: 6px;
                 padding-top: 4px;
                 font-weight: bold;
                 color: #aaa;
-            }
-            QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
-            QTextBrowser, QLineEdit {
+                font-size: {base_size}pt;
+            }}
+            QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
+            QTextBrowser, QLineEdit {{
                 background: #1e1e1e;
                 border: 1px solid #555;
                 border-radius: 4px;
                 padding: 4px;
-            }
-            QComboBox {
+                font-size: {mono_size}pt;
+                font-family: Monospace;
+            }}
+            QComboBox {{
                 background: #1e1e1e;
                 border: 1px solid #555;
                 border-radius: 4px;
                 padding: 3px 6px;
-            }
-            QComboBox::drop-down { border: none; }
-            QComboBox QAbstractItemView {
+                font-size: {mono_size}pt;
+                font-family: Monospace;
+            }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox QAbstractItemView {{
                 background: #1e1e1e;
                 selection-background-color: #3c3c3c;
-            }
-            QPushButton {
+                font-size: {mono_size}pt;
+            }}
+            QPushButton {{
                 background: #3c3c3c;
                 border: 1px solid #555;
                 padding: 6px 10px;
                 border-radius: 4px;
-            }
-            QPushButton:hover    { background: #505050; }
-            QPushButton:pressed  { background: #2a2a2a; }
-            QPushButton:disabled { color: #555; background: #2e2e2e; border-color: #3a3a3a; }
-            QLineEdit:disabled   { color: #555; }
-            QComboBox:disabled   { color: #555; }
-            QCheckBox { spacing: 5px; }
-            QSplitter::handle { background: #444; }
-            QScrollArea { background: transparent; }
+                font-size: {base_size}pt;
+            }}
+            QPushButton:hover    {{ background: #505050; }}
+            QPushButton:pressed  {{ background: #2a2a2a; }}
+            QPushButton:disabled {{ color: #555; background: #2e2e2e; border-color: #3a3a3a; }}
+            QLineEdit:disabled   {{ color: #555; }}
+            QComboBox:disabled   {{ color: #555; }}
+            QCheckBox {{ 
+                spacing: 5px;
+                font-size: {base_size}pt;
+            }}
+            QRadioButton {{
+                font-size: {base_size}pt;
+            }}
+            QLabel {{
+                font-size: {base_size}pt;
+            }}
+            QLabel#smallLabel {{
+                font-size: {small_size}pt;
+            }}
+            QSplitter::handle {{ background: #444; }}
+            QScrollArea {{ background: transparent; }}
         """)
 
     def apply_light_theme(self):
-        self.setStyleSheet("""
-            QWidget { background: #f0f0f0; color: #222; }
-            QGroupBox {
+        # Calculate related sizes based on font size
+        base_size = self._current_font_size
+        small_size = max(8, int(base_size * 0.73))  # ~8pt for 11pt base
+        mono_size = max(9, int(base_size * 0.82))   # ~9pt for 11pt base
+        bold_size = max(10, int(base_size * 0.91))  # ~10pt for 11pt base
+        
+        self.setStyleSheet(f"""
+            QWidget {{ 
+                background: #f0f0f0; 
+                color: #222;
+                font-size: {base_size}pt;
+            }}
+            QGroupBox {{
                 border: 1px solid #ccc;
                 border-radius: 6px;
                 margin-top: 6px;
                 padding-top: 4px;
                 font-weight: bold;
                 color: #555;
-            }
-            QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
-            QTextBrowser, QLineEdit {
+                font-size: {base_size}pt;
+            }}
+            QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
+            QTextBrowser, QLineEdit {{
                 background: white;
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 padding: 4px;
-            }
-            QComboBox {
+                font-size: {mono_size}pt;
+                font-family: Monospace;
+            }}
+            QComboBox {{
                 background: white;
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 padding: 3px 6px;
-            }
-            QPushButton {
+                font-size: {mono_size}pt;
+                font-family: Monospace;
+            }}
+            QPushButton {{
                 background: #e1e1e1;
                 border: 1px solid #bbb;
                 padding: 6px 10px;
                 border-radius: 4px;
-            }
-            QPushButton:hover    { background: #d0d0d0; }
-            QPushButton:disabled { color: #aaa; }
-            QSplitter::handle { background: #ccc; }
-            QScrollArea { background: transparent; }
+                font-size: {base_size}pt;
+            }}
+            QPushButton:hover    {{ background: #d0d0d0; }}
+            QPushButton:disabled {{ color: #aaa; }}
+            QCheckBox {{ 
+                spacing: 5px;
+                font-size: {base_size}pt;
+            }}
+            QRadioButton {{
+                font-size: {base_size}pt;
+            }}
+            QLabel {{
+                font-size: {base_size}pt;
+            }}
+            QLabel#smallLabel {{
+                font-size: {small_size}pt;
+            }}
+            QSplitter::handle {{ background: #ccc; }}
+            QScrollArea {{ background: transparent; }}
         """)
