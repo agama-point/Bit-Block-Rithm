@@ -249,7 +249,7 @@ class WorkerThread(QObject):
         # Build transaction string: FROM|TXID|TO|VALUE
         tx_string = f"{from_address}|{txid}|{to_address}|{send_value}"
         
-        self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+        self._log("---------------------", color="#888")
         self._log("📝 <b>Building Transaction</b>", color="#2196f3")
         self._log(f"  From:       <b>{from_address}</b>", color="#888")
         self._log(f"  TXID:       <b>{txid}</b>", color="#888")
@@ -315,7 +315,7 @@ class WorkerThread(QObject):
             if not found_signature:
                 self._log("⚠️ Device did not return signature in time", color="#f44336")
             
-            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            self._log("---------------------", color="#888")
                 
         except Exception as e:
             self._log(f"❌ Error during signing: {e}", color="#f44336")
@@ -345,7 +345,7 @@ class WorkerThread(QObject):
         
         url = "https://www.agamapoint.com/bbr/index.php?route=send_transaction"
         
-        self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+        self._log("---------------------", color="#888")
         self._log("📡 <b>Broadcasting Transaction to Blockchain</b>", color="#2196f3")
         self._log(f"  From:      <b>{self._tx_from}</b>", color="#888")
         self._log(f"  UTXO TXID: <b>{self._tx_utxo_txid}</b>", color="#888")
@@ -400,7 +400,7 @@ class WorkerThread(QObject):
                     "message": message
                 })
             
-            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            self._log("---------------------", color="#888")
             
         except requests.exceptions.Timeout:
             self._log("❌ <b>Timeout</b> - API did not respond in time (15s)", color="#f44336")
@@ -408,7 +408,7 @@ class WorkerThread(QObject):
                 "status": "error", 
                 "message": "API timeout"
             })
-            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            self._log("---------------------", color="#888")
             
         except requests.exceptions.RequestException as e:
             self._log(f"❌ <b>Network error:</b> {e}", color="#f44336")
@@ -416,7 +416,7 @@ class WorkerThread(QObject):
                 "status": "error", 
                 "message": f"Network error: {e}"
             })
-            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            self._log("---------------------", color="#888")
             
         except json.JSONDecodeError as e:
             self._log(f"❌ <b>Invalid JSON response</b> from API: {e}", color="#f44336")
@@ -424,7 +424,7 @@ class WorkerThread(QObject):
                 "status": "error", 
                 "message": "Invalid API response (not JSON)"
             })
-            self._log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color="#888")
+            self._log("---------------------", color="#888")
     
     # ------------------------------------------------------------------ #
     #  Utility                                                             #

@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSlot, QMetaObject
 from PyQt6.QtGui import QFont
+# Přidán import pro práci s SVG logem
+from PyQt6.QtSvgWidgets import QSvgWidget
 
 
 class MainWindow(QWidget):
@@ -36,7 +38,7 @@ class MainWindow(QWidget):
         self.apply_dark_theme()
 
     # ------------------------------------------------------------------ #
-    #  Layout                                                              #
+    #  Layout                                                            #
     # ------------------------------------------------------------------ #
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -99,7 +101,7 @@ class MainWindow(QWidget):
         root.addLayout(bottom)
 
     # ------------------------------------------------------------------ #
-    #  Left panel                                                          #
+    #  Left panel                                                        #
     # ------------------------------------------------------------------ #
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
@@ -287,13 +289,19 @@ class MainWindow(QWidget):
         return grp
 
     # ------------------------------------------------------------------ #
-    #  Right panel – log                                                   #
+    #  Right panel – log                                                 #
     # ------------------------------------------------------------------ #
     def _build_right_panel(self) -> QWidget:
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(4, 0, 0, 0)
         layout.setSpacing(4)
+
+        # 1) Přidání loga nahoru vpravo nad log
+        self.logo_widget = QSvgWidget("obt_logo.svg")
+        self.logo_widget.setFixedWidth(500)
+        self.logo_widget.setFixedHeight(85)  # Výška přizpůsobená pro zachování poměru
+        layout.addWidget(self.logo_widget, alignment=Qt.AlignmentFlag.AlignLeft)
 
         log_label = QLabel("Verbose Log")
         log_label.setObjectName("smallLabel")
@@ -310,7 +318,7 @@ class MainWindow(QWidget):
         return panel
 
     # ------------------------------------------------------------------ #
-    #  Slots / handlers                                                    #
+    #  Slots / handlers                                                  #
     # ------------------------------------------------------------------ #
     @pyqtSlot(str)
     def _append_log(self, html_msg: str):
@@ -418,9 +426,9 @@ class MainWindow(QWidget):
         """Set status label"""
         colors = {
             "Connected":    "#4caf50",
-            "Scanning …":   "#ffb300",
+            "Scanning …":    "#ffb300",
             "Connecting …": "#ffb300",
-            "Idle":         "#9e9e9e",
+            "Idle":          "#9e9e9e",
         }
         color = colors.get(text, "#f44336")
         self.status_label.setText(f"● {text}")
@@ -502,7 +510,7 @@ class MainWindow(QWidget):
         )
 
     # ------------------------------------------------------------------ #
-    #  Themes                                                              #
+    #  Themes                                                            #
     # ------------------------------------------------------------------ #
     def _change_font_size(self, size: int):
         """Change font size for entire application"""
@@ -540,7 +548,7 @@ class MainWindow(QWidget):
                 padding-top: 4px;
                 font-weight: bold;
                 color: #aaa;
-                font-size: {base_size}pt;
+                font-size: {small_size}pt;
             }}
             QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
             QTextBrowser, QLineEdit {{
@@ -614,7 +622,7 @@ class MainWindow(QWidget):
                 padding-top: 4px;
                 font-weight: bold;
                 color: #555;
-                font-size: {base_size}pt;
+                font-size: {small_size}pt;
             }}
             QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
             QTextBrowser, QLineEdit {{
