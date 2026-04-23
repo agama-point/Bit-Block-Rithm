@@ -9,7 +9,7 @@ from obt.ess251 import scalar_mult, signToy, verifyToy, G_POINT, pubkey_to_addr,
 from obt.ash24 import ASH24, bytes_to_bin24, print_bit_hash
 from obt import acipher as ac
 
-ver = "esp_c3_t8 | 26/03 :: 0.32"
+ver = "esp_c3_t8 | 26/03 :: 0.35"
 
 # Setup LEDs
 l1 = Led(8) # 14
@@ -156,9 +156,19 @@ while True:
                     signature_hex = sig_to_hexa(sig)
                     print(ujson.dumps({"sig_res": signature_hex}))
                     
-                if "code" in data:
-                    result = str(ac.ac_xor(data["code"])) + "%"
-                    print(result) 
+                if "encr" in data:
+                    try:
+                        result = ac.ac_xor(data["encr"])
+                        print(result) # send HEX + \n
+                    except Exception as e:
+                        print(f":: Encrypt Error: {e}")
+
+                if "decr" in data:
+                    try:
+                        result = ac.ac_xor_decrypt(data["decr"])
+                        print(result) # send plain text + \n
+                    except Exception as e:
+                        print(f":: Decrypt Error: {e}")
                     
                 # Double -> return 2*value
                 if "double" in data:
