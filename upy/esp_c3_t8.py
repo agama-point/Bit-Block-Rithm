@@ -7,7 +7,7 @@ from components.led import Led
 import ujson  
 from obt.ess251 import scalar_mult, signToy, verifyToy, G_POINT, pubkey_to_addr, sig_to_hexa
 from obt.ash24 import ASH24, bytes_to_bin24, print_bit_hash
-
+from obt import acipher as ac
 
 ver = "esp_c3_t8 | 26/03 :: 0.32"
 
@@ -43,6 +43,10 @@ class StatusLed(NeoPixel):
         self.fill(color)
         self.write()
         self._last_state = color
+
+# test ac
+print("[ac]",ac.ac_xor("BEST TEST EVER"))
+# 2eb8a4392f75578847acc54e605731b2
 
 
 # Startup
@@ -150,7 +154,11 @@ while True:
                     print(":: sig:", sig)
                     # print(sig_to_hexa(sig))
                     signature_hex = sig_to_hexa(sig)
-                    print(ujson.dumps({"sig_res": signature_hex})) 
+                    print(ujson.dumps({"sig_res": signature_hex}))
+                    
+                if "code" in data:
+                    result = str(ac.ac_xor(data["code"])) + "%"
+                    print(result) 
                     
                 # Double -> return 2*value
                 if "double" in data:
@@ -160,4 +168,3 @@ while True:
             except ValueError:
                 print(":: Invalid JSON")
                
-
