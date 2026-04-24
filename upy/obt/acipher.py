@@ -6,7 +6,7 @@ import hashlib
 import ubinascii
 import os
 
-DEBUG = True
+DEBUG = False
 BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 _mnemonic_key = "Agama Point"
