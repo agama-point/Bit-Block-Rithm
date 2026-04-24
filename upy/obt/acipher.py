@@ -6,12 +6,12 @@ import hashlib
 import ubinascii
 import os
 
-DEBUG = False
+DEBUG = True
 BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
-_mnemonic_key = "AgamaPoint"
-# AgamaPoint:
-# 6cfdf76d0f2112db138c801825051e99efc8e7affc532fce4a088ad19844418e
+_mnemonic_key = "Agama Point"
+# bf11c007b3eddfa1ebcca54617f27c337e14ea840551537d8a239945b04abd00
+
 
 def _vprint(*args):
     if DEBUG:
