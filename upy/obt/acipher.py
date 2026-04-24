@@ -8,6 +8,7 @@ import os
 
 DEBUG = False
 BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+SEPARATOR = "/+"
 
 _mnemonic_key = "Agama Point"
 # bf11c007b3eddfa1ebcca54617f27c337e14ea840551537d8a239945b04abd00
@@ -33,7 +34,7 @@ def ac_xor(text):
     _vprint(f"Input text: '{text}'")
     text_bytes = text.encode('utf-8')
     input_len = len(text_bytes)
-    separator = "/+"
+    separator = SEPARATOR
     sep_len = len(separator)
     if DEBUG:
         print("len:", input_len)
@@ -76,7 +77,7 @@ def ac_xor_decrypt(hex_str):
         dec_payload.append(cipher_bytes[i] ^ key_hash[i])
         
     full_str = dec_payload.decode('utf-8')
-    return full_str.split("/+")[0]
+    return full_str.split(SEPARATOR)[0]
 
 def ac_caesar(text, s=13, up=True):
     _vprint(f"Caesar input: '{text}', shift: {s}")
