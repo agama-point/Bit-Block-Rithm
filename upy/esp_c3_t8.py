@@ -9,7 +9,7 @@ from obt.ess251 import scalar_mult, signToy, verifyToy, G_POINT, pubkey_to_addr,
 from obt.ash24 import ASH24, bytes_to_bin24, print_bit_hash
 from obt import acipher as ac
 
-ver = "esp_c3_t8 | 26/03 :: 0.32"
+ver = "esp_c3_t8 | 26/03 :: 0.36"
 
 # Setup LEDs
 l1 = Led(8) # 14
@@ -46,23 +46,20 @@ class StatusLed(NeoPixel):
 
 # test ac
 print("[ac]",ac.ac_xor("BEST TEST EVER"))
-# 2eb8a4392f75578847acc54e605731b2
+# fd54935393b99af2bfece01052a05318
 
 
 # Startup
-print(":: start")
-sleep(3)
+print(":: START")
+sleep(1)
 
 def blink():
-    l1.value(1)
-    sleep(0.2)
     l1.value(0)
-    l2.value(1)
-    sleep(0.3)
-    l2.value(0)
+    sleep(0.2)
+    l1.value(1)
+    sleep(0.3)    
 
-for i in range(3):
-    print(i)
+for i in range(5):
     blink()
 
 
@@ -92,7 +89,7 @@ test_key(222,"T8|Bob")
 print(":: ASH24: Agama", hex(ASH24(b"Agama")))
 test_ess251()
 
-print("READY")
+print(":: READY")
 
 i = 0
 
@@ -125,7 +122,7 @@ while True:
                 data = ujson.loads(line)
 
                 if "get" in data and data["get"] == "ver":     
-#                   # print(ver)
+                    # print(ver)
                     print(ujson.dumps({"res_ver": ver}))
 
                 if "get" in data and data["get"] == "addr":     
@@ -133,7 +130,7 @@ while True:
 
                 # LED
                 if "led1" in data:
-                    l1.value(1 if data["led1"] == "on" else 0)                
+                    l1.value(0 if data["led1"] == "on" else 1) # C3_inverse              
                 if "led2" in data:
                     l2.value(1 if data["led2"] == "on" else 0)
                 
@@ -156,9 +153,19 @@ while True:
                     signature_hex = sig_to_hexa(sig)
                     print(ujson.dumps({"sig_res": signature_hex}))
                     
-                if "code" in data:
-                    result = str(ac.ac_xor(data["code"])) + "%"
-                    print(result) 
+                if "encr" in data:
+                    try:
+                        result = ac.ac_xor(data["encr"])
+                        print(result) # send HEX + \n
+                    except Exception as e:
+                        print(f":: Encrypt Error: {e}")
+
+                if "decr" in data:
+                    try:
+                        result = ac.ac_xor_decrypt(data["decr"])
+                        print(result) # send plain text + \n
+                    except Exception as e:
+                        print(f":: Decrypt Error: {e}")
                     
                 # Double -> return 2*value
                 if "double" in data:
@@ -167,4 +174,27 @@ while True:
 
             except ValueError:
                 print(":: Invalid JSON")
+
+
+"""
+[ac] fd54935393b99af2bfece01052a05318
+:: START
+:: [T8|Bob]
+(131, 202) 83ca
+====================
+:: ASH24: Agama 0x6217ef
+:: [Sign/Verify]
+
+[DEBUG-SIGN] msg_hash = 123
+[DEBUG-SIGN] k = 46
+[DEBUG-SIGN] R_point = (152, 227)
+[DEBUG-SIGN] r = 152 s = 172
+
+[DEBUG-VERIFY] e = 123
+[DEBUG-VERIFY] L = s*G: [59, 90]
+[DEBUG-VERIFY] e*PubKey: [163, 0]
+[DEBUG-VERIFY] P = R + e*PubKey: [59, 90]
+:: Signature valid: True
+:: READY
+"""
                
